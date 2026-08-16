@@ -1,0 +1,396 @@
+[meta]
+version = "1"
+
+[time_consistency]
+enabled = true
+# Fractions of the time axis. The earliest slice trains a single-feature model, the latest
+# scores it; a feature that ranks one way in the first and the opposite way in the last has
+# inverted. Widening the holdout buys positives and costs the gap between the windows.
+train_window = [0.0, 0.17]
+holdout_window = [0.83, 1.0]
+
+# Reject a whole missingness family when any member inverts. The per-column verdict is
+# fragile at the threshold and the delta is not, and members of one family degrade
+# together -- a per-column cut splits the family arbitrarily.
+#
+# Measured, every column in V322-V339 moves by -0.09 +/- 0.015, and the split into 12 `inverted` 
+# and 6 `pass` follows from where the margin sits rather than from anything in the data. 
+# V310 makes the same point from the other side -- the worst delta in the dataset at -0.1218, 
+# and it comes back `pass` because its holdout AUC misses the inversion margin by 0.003.
+reject_by_block = true
+
+[distribution_shift]
+enabled = true
+# Notebooks run PSI and adversarial validation over the same columns: 12 clear PSI > 0.25 
+# while a discriminator built on them alone stays under 0.60 AUC, and 0 go the other way. 
+# The asymmetry is one-directional, so on this data PSI is the trigger-happy of the two -- 
+# it flags marginal movement carrying no usable information about which period a row came from.
+#
+# The velocity aggregates are the concrete case: a counter accumulating over a client's
+# lifetime must distribute differently in a late window than an early one, so PSI measures
+# their definition rather than an anomaly.
+psi_threshold = 0.50
+
+# A column that is constant in the reference window cannot be binned, so PSI is undefined
+# rather than large. That is a different fact from "this column moved", and lumping the two
+# together would reject 158 columns for being uninformative under the banner of drift.
+# Kept separate and off: uninformative is the redundancy check's business, not this one's.
+reject_degenerate = false
+
+[redundancy]
+enabled = true
+
+[selection]
+enabled = false
+
+[contract]
+min_admitted_features = 50
+max_staleness_days = 30
+
+[uid_aggregates]
+# std of each named Dxn over the client's earlier transactions -- the client's consistency
+# on that counter.
+#
+# D1n is deliberately absent, and the reason is structural rather than empirical: D1n is a
+# *component of the uid*, so within any group its std is identically zero and the column
+# carries no information whatsoever. The same is true of the winners' uid, which is also
+# keyed on D1n -- their std features are over the other D columns for exactly this reason.
+std_of_derived = ["D2n", "D3n", "D5n", "D10n", "D11n", "D15n"]
+# Mean-encoded over the client's history: the client's running rate for each counter.
+mean_encode_c = ["C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10", "C11", "C12", "C13", "C14"]
+# M4 is deliberately absent: it is a three-level string (M0/M1/M2) and a mean over labels
+# is not a number. The other eight are booleans, so their mean is the client's historical
+# rate of that flag.
+mean_encode_m = ["M1", "M2", "M3", "M5", "M6", "M7", "M8", "M9"]
+
+## Columns the contract *defines* rather than merely admits.
+##
+## Row-local only: each computes from one row and nothing else, so it is point-in-time by
+## construction and trivially servable -- no history, no lookup, no fitted parameters to
+## pin. An entity aggregate belongs in the feature-engineering SQL under a RANGE window and
+## reaches the contract as source = "retrieved"; a fitted transform (PCA) needs its
+## parameters committed as an artefact before it can be declared here at all.
+##
+## Derived columns are audited exactly like raw ones -- time consistency, PSI, redundancy
+## all see them -- which is the point of computing them before the audit rather than after.
+##
+## `Dxn = floor(TransactionDT / 86400) - Dx`: each D column counts days since something
+## began for this card, so subtracting recovers the day it began, a constant across that
+## client's history. From Konstantin Yakovlev, "IEEE - uid detection - v6" (Kaggle, 2019),
+## which normalises exactly these seven. Adding an eighth is a diff to this file.
+
+## The sixth audit: does a column carry signal *within* each segment, or only between them?
+##
+## The other five judge on pooled data, which is where this failure hides. ProductCD splits
+## the test period into groups with very different fraud rates -- W is 77% of rows at
+## 0.0198, C is 11% at 0.1467 -- so a column correlated with the product earns a pooled AUC
+## for separating *products*, and every pooled check records it as fraud signal.
+##
+## Measured 2026-08-16 on the 225 admitted columns (test split, direction-free
+## single-feature AUC):
+##
+##   column     pooled   within W
+##   C9         0.679    0.515
+##   card3      0.656    0.501     <- a coin flip on three quarters of the traffic
+##   M4         0.653    0.501
+##   M4_is_M2   0.663    0.512
+##   V307       0.510    0.663     <- the mirror image: pooling hides it
+##
+## Strong tail, pooled vs within W: 30 -> 17 columns above 0.60, and 14 -> 6 above 0.65,
+## against a median that fell 0.5407 -> 0.5350. The median is why this went unnoticed.
+##
+## Two thresholds on purpose. `pooled_floor` restricts the audit to columns admitted on the
+## strength of a pooled score; `max_drop` is how much of that score may evaporate inside the
+## segment. A weak column staying weak is not this check's business, and W has a
+## seven-times lower base rate, so *some* decay is the problem being harder rather than the
+## column being hollow. 0.08 sits below the 0.10-0.16 the collapsing columns show and above
+## the 0.01-0.04 that ordinary columns move by.
+##
+## `reject_unmeasurable = false`: a column constant or all-null inside the segment cannot be
+## scored there, and "cannot be scored" is a different finding from "scored badly". Same
+## reasoning as `reject_degenerate` on the drift side. It is counted in the fragment's
+## qualification either way -- 114 of 225 admitted columns are unmeasurable inside W, which
+## is a fact about coverage that belongs in the contract even when it rejects nothing.
+
+[segment_qualification]
+enabled = true
+segment_column = "ProductCD"
+# Report, do not reject. Turned off the day it was turned on, on its own evidence: applying
+# its 26 rejections cost **0.0325 PR-AUC** globally (0.5308 -> 0.4983, ~3.5 sd of the
+# two-fit noise band) and moved the segment it exists to protect by **0.0005** --
+# W went 0.2130 -> 0.2125. Unseen-client PR-AUC also fell 0.0392.
+#
+# The premise was that a column separating *products* rather than fraud is spurious signal.
+# For within-segment inference that is right. For **prediction** it is wrong: C runs at a
+# 0.1467 fraud rate against W's 0.0198, so "this is a C transaction" is genuine information
+# and a column carrying it is doing legitimate work. Simpson's paradox is a paradox only
+# when you wanted the within-group answer.
+#
+# The measurement stays -- 262 of 502 columns unmeasurable inside a segment holding 74% of
+# rows is a real fact about coverage, and it now lands in the contract instead of a script.
+reject = false
+pooled_floor = 0.60
+max_drop = 0.08
+reject_unmeasurable = false
+
+[[derive]]
+name = "D1n"
+tool = "days_since_to_start_day"
+inputs = ["D1"]
+
+[[derive]]
+name = "D2n"
+tool = "days_since_to_start_day"
+inputs = ["D2"]
+
+[[derive]]
+name = "D3n"
+tool = "days_since_to_start_day"
+inputs = ["D3"]
+
+[[derive]]
+name = "D5n"
+tool = "days_since_to_start_day"
+inputs = ["D5"]
+
+[[derive]]
+name = "D10n"
+tool = "days_since_to_start_day"
+inputs = ["D10"]
+
+[[derive]]
+name = "D11n"
+tool = "days_since_to_start_day"
+inputs = ["D11"]
+
+[[derive]]
+name = "D15n"
+tool = "days_since_to_start_day"
+inputs = ["D15"]
+
+## Columns excluded for reasons no check can measure -- PII, a legal or fairness
+## constraint, an upstream deprecation. This is policy, not audit, which is why it becomes
+## its own contract fragment instead of being mixed into a technique's rejections.
+##
+## A check rejecting a column is evidence. This is a decision. They should not look alike
+## in the contract.
+##
+## [[blacklist]]
+## column = "example_column"
+## reason = "why no check could have found this"
+
+## Admit a column a check rejected. Every field is required and the expiry is enforced:
+## loading a policy with a lapsed override fails, so an override cannot quietly become
+## permanent. Recorded in the contract as admitted_by = "override", never silently.
+##
+## [[override]]
+## column = "V258"
+## reason = "block-level rejection is too coarse here; per-column delta is +0.004"
+## expires = "2026-12-31"
+
+
+## The uid aggregates were readmitted by override, and the override was retired -- 2026-08-16
+##
+## Nineteen `client_*` aggregates that time_consistency rejected were readmitted on the
+## argument that a lifetime aggregate's single-feature AUC across an early and a late window
+## measures the aggregate changing meaning as the entity ages, not a signal inversion.
+##
+## The argument still looks correct. It is simply not worth nineteen columns: measured over
+## five seeds, admitted-with-override scored 0.8954 ROC-AUC and admitted-without 0.8951 --
+## a difference of 0.0002, a tenth of the resolution of a five-seed mean. The contract is
+## simpler without them and performs identically.
+##
+## Kept as a comment rather than deleted because the reasoning is the useful part: an
+## override is the place where a human overrules the audit, and a record of one that was
+## tried and withdrawn on evidence is worth more than a clean file.
+
+
+## ---------------------------------------------------------------------------------
+## Encodings, declared for measurement -- 2026-08-16
+##
+## Both families below are declared rather than assumed. They go through the same three
+## audits as any raw column and reach the model only if the contract admits them, so
+## "does this encoding help?" becomes a number instead of an opinion.
+##
+## ---- one-hot ----
+##
+## One indicator per level, with the level named here. A tool that expanded a column into
+## whatever levels it found would infer a different set in training than at serving time;
+## naming them makes the level set a reviewable diff, and makes a new category show up as
+## an indicator that is 0 everywhere rather than as a silently reshaped matrix.
+##
+## Only the five low-cardinality columns are here. DeviceInfo (1,786 levels), id_33 (260)
+## and id_31 (130) are handled by frequency encoding below; one-hot on those would add
+## thousands of near-empty columns, and LightGBM's native categorical split is strictly
+## more expressive than a per-level indicator anyway.
+##
+## Expectation, recorded before the measurement so it cannot be adjusted afterwards: for a
+## gradient-boosted tree these should be neutral. They are declared because the project's
+## standard is to measure the things it asserts, and `training/data.py` had been asserting
+## this one in a comment.
+##
+## Two card6 levels are near-degenerate on purpose -- "debit or credit" occurs 30 times and
+## "charge card" 15, out of 590,540. They are declared so the redundancy and drift audits
+## get to reject them on evidence rather than being pre-filtered by hand.
+
+[[derive]]
+name = "ProductCD_is_W"
+tool = "one_hot"
+inputs = ["ProductCD"]
+params = { level = "W" }
+
+[[derive]]
+name = "ProductCD_is_C"
+tool = "one_hot"
+inputs = ["ProductCD"]
+params = { level = "C" }
+
+[[derive]]
+name = "ProductCD_is_R"
+tool = "one_hot"
+inputs = ["ProductCD"]
+params = { level = "R" }
+
+[[derive]]
+name = "ProductCD_is_H"
+tool = "one_hot"
+inputs = ["ProductCD"]
+params = { level = "H" }
+
+[[derive]]
+name = "ProductCD_is_S"
+tool = "one_hot"
+inputs = ["ProductCD"]
+params = { level = "S" }
+
+[[derive]]
+name = "card4_is_visa"
+tool = "one_hot"
+inputs = ["card4"]
+params = { level = "visa" }
+
+[[derive]]
+name = "card4_is_mastercard"
+tool = "one_hot"
+inputs = ["card4"]
+params = { level = "mastercard" }
+
+[[derive]]
+name = "card4_is_american_express"
+tool = "one_hot"
+inputs = ["card4"]
+params = { level = "american express" }
+
+[[derive]]
+name = "card4_is_discover"
+tool = "one_hot"
+inputs = ["card4"]
+params = { level = "discover" }
+
+[[derive]]
+name = "card6_is_debit"
+tool = "one_hot"
+inputs = ["card6"]
+params = { level = "debit" }
+
+[[derive]]
+name = "card6_is_credit"
+tool = "one_hot"
+inputs = ["card6"]
+params = { level = "credit" }
+
+[[derive]]
+name = "card6_is_debit_or_credit"
+tool = "one_hot"
+inputs = ["card6"]
+params = { level = "debit or credit" }
+
+[[derive]]
+name = "card6_is_charge_card"
+tool = "one_hot"
+inputs = ["card6"]
+params = { level = "charge card" }
+
+[[derive]]
+name = "M4_is_M0"
+tool = "one_hot"
+inputs = ["M4"]
+params = { level = "M0" }
+
+[[derive]]
+name = "M4_is_M1"
+tool = "one_hot"
+inputs = ["M4"]
+params = { level = "M1" }
+
+[[derive]]
+name = "M4_is_M2"
+tool = "one_hot"
+inputs = ["M4"]
+params = { level = "M2" }
+
+[[derive]]
+name = "DeviceType_is_desktop"
+tool = "one_hot"
+inputs = ["DeviceType"]
+params = { level = "desktop" }
+
+[[derive]]
+name = "DeviceType_is_mobile"
+tool = "one_hot"
+inputs = ["DeviceType"]
+params = { level = "mobile" }
+
+## ---- frequency encoding ----
+##
+## One integer per column regardless of cardinality: how often this value occurs in the
+## training split. This is a *fitted* transform, so its parameters are committed --
+## references/frequency-maps.json, built by `uv run build-frequency-maps`, fitted on the
+## 442,905 training rows and nothing else. Counting the frame in hand would give training
+## and scoring two different mappings; counting train and test together would be
+## transductive, which is the shortcut docs/adversarial-drift.md and point-in-time.md both
+## exist to forbid. The published kernels do count over both -- legitimate in a
+## competition, unavailable to a system scoring a period nobody has seen.
+##
+## Values below min_count (2) are absent from the map and encode as null. A count of 1 is
+## not a frequency, it is a fingerprint of one transaction.
+##
+## Five columns, chosen on evidence rather than on cardinality. The question frequency
+## encoding answers is "does rarity itself predict fraud here", and it does not for every
+## high-cardinality column. Fraud rate by frequency band, against a 0.0350 base:
+##
+##   id_31          6.77x / 4.14x / 2.96x / 2.17x   monotone, strongest
+##   DeviceInfo     2.22x / 4.29x / 3.57x / 1.54x   strong
+##   addr1          0.70x / 2.55x / 1.83x / 0.69x   a hump, but a real one
+##   R_emaildomain  3.36x / 1.24x / 0.89x / 2.44x   U-shaped; both tails carry it
+##   P_emaildomain     -  / 2.05x / 1.08x / 1.03x   mild, monotone
+##
+## card1 (0.85 / 0.76 / 1.19 / 0.98) and card2 (- / 0.37 / 1.07 / 0.99) were declared here
+## first and removed: their frequency is portfolio size, not risk. They were picked by
+## cardinality, which is the same "chosen by assumption" mistake the noise-band entry in
+## MEASUREMENTS.md catches elsewhere. card1 alone was 9,146 levels of committed map.
+
+[[derive]]
+name = "addr1_freq"
+tool = "frequency_encode"
+inputs = ["addr1"]
+
+[[derive]]
+name = "P_emaildomain_freq"
+tool = "frequency_encode"
+inputs = ["P_emaildomain"]
+
+[[derive]]
+name = "R_emaildomain_freq"
+tool = "frequency_encode"
+inputs = ["R_emaildomain"]
+
+[[derive]]
+name = "DeviceInfo_freq"
+tool = "frequency_encode"
+inputs = ["DeviceInfo"]
+
+[[derive]]
+name = "id_31_freq"
+tool = "frequency_encode"
+inputs = ["id_31"]

@@ -1,0 +1,37 @@
+{
+  "description": "Which id_* columns carry a small set of labels rather than a number, and how to encode them.",
+  "provenance": {
+    "author": "Chris Deotte",
+    "work": "EDA for Columns V and ID",
+    "url": "https://www.kaggle.com/code/cdeotte/eda-for-columns-v-and-id",
+    "retrieved": "2026-08-12"
+  },
+  "note": "The competition host declares id_12 through id_38 categorical. BigQuery autodetect types twelve of them as numeric because their values are digits. These lists are the source notebook's split; see docs/ROADMAP.md for the open item.",
+  "label_like": [
+    "id_12",
+    "id_15",
+    "id_16",
+    "id_27",
+    "id_28",
+    "id_29",
+    "id_35",
+    "id_36",
+    "id_37",
+    "id_38"
+  ],
+  "categorical": [
+    "id_23",
+    "id_30",
+    "id_31",
+    "id_33",
+    "id_34"
+  ],
+  "encoding": {
+    "Unknown": 0,
+    "NotFound": 1,
+    "Found": 2,
+    "New": 3,
+    "F": 0,
+    "T": 1
+  }
+}

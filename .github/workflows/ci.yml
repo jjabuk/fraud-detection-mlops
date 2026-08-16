@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+jobs:
+  quality:
+    name: CI Pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run ruff
+        run: uv run ruff check .
+
+      # Plain `pytest`. This used to swallow exit code 5 -- "no tests collected" -- from a
+      # time when there were none. There are 290, and a run that suddenly collects zero is
+      # now the most alarming thing this workflow could see, not something to wave through.
+      - name: Run pytest
+        run: uv run pytest
+
+      # Audits the dependency set the *image* ships, which is the one an attacker can
+      # reach: `--no-dev` because pytest and ruff never leave CI. Blocking on purpose. If a
+      # finding is triaged as not-applicable, add `--ignore-vuln <ID>` here with a comment
+      # saying who decided and why -- an advisory waved through silently is the same
+      # failure mode as a gate check that cannot fail.
+      - name: Audit dependencies for known vulnerabilities
+        run: |
+          uv export --format requirements-txt --no-emit-project --no-dev > requirements.audit.txt
+          uvx pip-audit --requirement requirements.audit.txt --strict
+
+      - name: Setup Tofu
+        uses: opentofu/setup-opentofu@v1
+
+      - name: Run tofu validate
+        run: |
+          cd iaac
+          tofu init -backend=false
+          tofu validate
+
+      - name: Run dagster definitions validate (Feature Platform)
+        run: uv run dagster definitions validate -m fraud_detection.orchestration.definitions.feature_platform
+        env:
+          GCP_PROJECT_ID: "mock-project-id"
+
+      - name: Run dagster definitions validate (Model Factory)
+        run: uv run dagster definitions validate -m fraud_detection.orchestration.definitions.model_factory
+        env:
+          GCP_PROJECT_ID: "mock-project-id"
+
+      - name: Run dagster definitions validate (Inference)
+        run: uv run dagster definitions validate -m fraud_detection.orchestration.definitions.inference
+        env:
+          GCP_PROJECT_ID: "mock-project-id"
+
+      # The image is what the Cloud Run Job actually runs, so a PR that breaks the build
+      # should fail here rather than at the next deploy. Built, not pushed: pushing from a
+      # pull request would put unreviewed code in the registry the job pulls from.
+      - name: Build the scoring image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          # Into the local daemon rather than discarded, because the two steps below have
+          # to scan the artifact this build produced. Scanning a rebuild would be scanning
+          # a different thing and calling it the same.
+          load: true
+          tags: fraud-detection:${{ github.sha }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # IaC misconfiguration -- Terraform, the Dockerfile. Unchanged; it was here first.
+      - name: Scan the infrastructure definitions
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      # The other half, and the half that was missing: `scan-type: config` reads the
+      # Dockerfile's *instructions* and never looks at what the build actually produced.
+      # This scans the layers -- the OS packages from the base image and every wheel uv
+      # installed. `ignore-unfixed` because a finding with no available fix is not an
+      # action, and a gate that cannot be satisfied gets disabled within a month.
+      - name: Scan the built image
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: fraud-detection:${{ github.sha }}
+          scanners: 'vuln,secret'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      # An SBOM answers a question the scans cannot: months later, when an advisory lands
+      # for some transitive package, which shipped images contained it? That has to be
+      # answerable from a record made at build time, because the image is immutable and
+      # nobody will rebuild forty tags to find out.
+      - name: Generate the SBOM
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: fraud-detection:${{ github.sha }}
+          format: 'cyclonedx'
+          output: 'sbom.cyclonedx.json'
+
+      - name: Publish the SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.cyclonedx.json
+          if-no-files-found: error

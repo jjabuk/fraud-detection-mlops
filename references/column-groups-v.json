@@ -1,0 +1,742 @@
+{
+  "provenance": {
+    "author": "Chris Deotte",
+    "work": "EDA for Columns V and ID",
+    "url": "https://www.kaggle.com/code/cdeotte/eda-for-columns-v-and-id",
+    "retrieved": "2026-08-12",
+    "note": "The partition is human judgement read off correlation heatmaps and is taken as given, not re-derived. Everything downstream of it \u2014 the representative selection and the audit of whether the partition holds \u2014 is this repository's."
+  },
+  "description": "Correlated sub-groups within each missingness family of the V block. Each inner list is a set of columns judged to carry the same signal; one representative per list survives reduction.",
+  "coverage": {
+    "blocks": 21,
+    "groups": 128,
+    "columns": 338,
+    "of": 339,
+    "uncovered": [
+      "V155"
+    ],
+    "uncovered_note": "V155 appears in no group. It falls between two hand-drawn partitions of the V138-V166 missingness family and is treated here as its own group of one."
+  },
+  "blocks": [
+    {
+      "block": "V1-V11",
+      "source_slice": "nans_groups[279287]",
+      "groups": [
+        [
+          "V1"
+        ],
+        [
+          "V2",
+          "V3"
+        ],
+        [
+          "V4",
+          "V5"
+        ],
+        [
+          "V6",
+          "V7"
+        ],
+        [
+          "V8",
+          "V9"
+        ],
+        [
+          "V10",
+          "V11"
+        ]
+      ]
+    },
+    {
+      "block": "V12-V34",
+      "source_slice": "nans_groups[76073]",
+      "groups": [
+        [
+          "V12",
+          "V13"
+        ],
+        [
+          "V14"
+        ],
+        [
+          "V15",
+          "V16",
+          "V17",
+          "V18",
+          "V21",
+          "V22",
+          "V31",
+          "V32",
+          "V33",
+          "V34"
+        ],
+        [
+          "V19",
+          "V20"
+        ],
+        [
+          "V23",
+          "V24"
+        ],
+        [
+          "V25",
+          "V26"
+        ],
+        [
+          "V27",
+          "V28"
+        ],
+        [
+          "V29",
+          "V30"
+        ]
+      ]
+    },
+    {
+      "block": "V35-V52",
+      "source_slice": "nans_groups[168969]",
+      "groups": [
+        [
+          "V35",
+          "V36"
+        ],
+        [
+          "V37",
+          "V38"
+        ],
+        [
+          "V39",
+          "V40",
+          "V42",
+          "V43",
+          "V50",
+          "V51",
+          "V52"
+        ],
+        [
+          "V41"
+        ],
+        [
+          "V44",
+          "V45"
+        ],
+        [
+          "V46",
+          "V47"
+        ],
+        [
+          "V48",
+          "V49"
+        ]
+      ]
+    },
+    {
+      "block": "V53-V74",
+      "source_slice": "nans_groups[77096]",
+      "groups": [
+        [
+          "V53",
+          "V54"
+        ],
+        [
+          "V55",
+          "V56"
+        ],
+        [
+          "V57",
+          "V58",
+          "V59",
+          "V60",
+          "V63",
+          "V64",
+          "V71",
+          "V72",
+          "V73",
+          "V74"
+        ],
+        [
+          "V61",
+          "V62"
+        ],
+        [
+          "V65"
+        ],
+        [
+          "V66",
+          "V67"
+        ],
+        [
+          "V68"
+        ],
+        [
+          "V69",
+          "V70"
+        ]
+      ]
+    },
+    {
+      "block": "V75-V94",
+      "source_slice": "nans_groups[89164]",
+      "groups": [
+        [
+          "V75",
+          "V76"
+        ],
+        [
+          "V77",
+          "V78"
+        ],
+        [
+          "V79",
+          "V80",
+          "V81",
+          "V84",
+          "V85",
+          "V92",
+          "V93",
+          "V94"
+        ],
+        [
+          "V82",
+          "V83"
+        ],
+        [
+          "V86",
+          "V87"
+        ],
+        [
+          "V88"
+        ],
+        [
+          "V89"
+        ],
+        [
+          "V90",
+          "V91"
+        ]
+      ]
+    },
+    {
+      "block": "V95-V106",
+      "source_slice": "['V'+str(x) for x in range(95,107)]",
+      "groups": [
+        [
+          "V95",
+          "V96",
+          "V97",
+          "V101",
+          "V102",
+          "V103",
+          "V105",
+          "V106"
+        ],
+        [
+          "V98"
+        ],
+        [
+          "V99",
+          "V100"
+        ],
+        [
+          "V104"
+        ]
+      ]
+    },
+    {
+      "block": "V107-V123",
+      "source_slice": "['V'+str(x) for x in range(107,124)]",
+      "groups": [
+        [
+          "V107"
+        ],
+        [
+          "V108",
+          "V109",
+          "V110",
+          "V114"
+        ],
+        [
+          "V111",
+          "V112",
+          "V113"
+        ],
+        [
+          "V115",
+          "V116"
+        ],
+        [
+          "V117",
+          "V118",
+          "V119"
+        ],
+        [
+          "V120",
+          "V122"
+        ],
+        [
+          "V121"
+        ],
+        [
+          "V123"
+        ]
+      ]
+    },
+    {
+      "block": "V124-V137",
+      "source_slice": "['V'+str(x) for x in range(124,138)]",
+      "groups": [
+        [
+          "V124",
+          "V125"
+        ],
+        [
+          "V126",
+          "V127",
+          "V128",
+          "V132",
+          "V133",
+          "V134"
+        ],
+        [
+          "V129"
+        ],
+        [
+          "V130",
+          "V131"
+        ],
+        [
+          "V135",
+          "V136",
+          "V137"
+        ]
+      ]
+    },
+    {
+      "block": "V138-V163",
+      "source_slice": "nans_groups[508595]",
+      "groups": [
+        [
+          "V138"
+        ],
+        [
+          "V139",
+          "V140"
+        ],
+        [
+          "V141",
+          "V142"
+        ],
+        [
+          "V146",
+          "V147"
+        ],
+        [
+          "V148",
+          "V149",
+          "V153",
+          "V154",
+          "V156",
+          "V157",
+          "V158"
+        ],
+        [
+          "V161",
+          "V162",
+          "V163"
+        ]
+      ]
+    },
+    {
+      "block": "V143-V166",
+      "source_slice": "nans_groups[508589]",
+      "groups": [
+        [
+          "V143",
+          "V164",
+          "V165"
+        ],
+        [
+          "V144",
+          "V145",
+          "V150",
+          "V151",
+          "V152",
+          "V159",
+          "V160"
+        ],
+        [
+          "V166"
+        ]
+      ]
+    },
+    {
+      "block": "V167-V183",
+      "source_slice": "[x for x in nans_groups[450909] if int(x[1:])<186]",
+      "groups": [
+        [
+          "V167",
+          "V168",
+          "V177",
+          "V178",
+          "V179"
+        ],
+        [
+          "V172",
+          "V176"
+        ],
+        [
+          "V173"
+        ],
+        [
+          "V181",
+          "V182",
+          "V183"
+        ]
+      ]
+    },
+    {
+      "block": "V186-V216",
+      "source_slice": "[x for x in nans_groups[450909] if (int(x[1:])>183)]",
+      "groups": [
+        [
+          "V186",
+          "V187",
+          "V190",
+          "V191",
+          "V192",
+          "V193",
+          "V196",
+          "V199"
+        ],
+        [
+          "V202",
+          "V203",
+          "V204",
+          "V211",
+          "V212",
+          "V213"
+        ],
+        [
+          "V205",
+          "V206"
+        ],
+        [
+          "V207"
+        ],
+        [
+          "V214",
+          "V215",
+          "V216"
+        ]
+      ]
+    },
+    {
+      "block": "V169-V210",
+      "source_slice": "nans_groups[450721]",
+      "groups": [
+        [
+          "V169"
+        ],
+        [
+          "V170",
+          "V171",
+          "V200",
+          "V201"
+        ],
+        [
+          "V174",
+          "V175"
+        ],
+        [
+          "V180"
+        ],
+        [
+          "V184",
+          "V185"
+        ],
+        [
+          "V188",
+          "V189"
+        ],
+        [
+          "V194",
+          "V195",
+          "V197",
+          "V198"
+        ],
+        [
+          "V208",
+          "V210"
+        ],
+        [
+          "V209"
+        ]
+      ]
+    },
+    {
+      "block": "V217-V237",
+      "source_slice": "[x for x in nans_groups[460110] if int(x[1:])<240]",
+      "groups": [
+        [
+          "V217",
+          "V218",
+          "V219",
+          "V231",
+          "V232",
+          "V233",
+          "V236",
+          "V237"
+        ],
+        [
+          "V223"
+        ],
+        [
+          "V224",
+          "V225"
+        ],
+        [
+          "V226"
+        ],
+        [
+          "V228"
+        ],
+        [
+          "V229",
+          "V230"
+        ],
+        [
+          "V235"
+        ]
+      ]
+    },
+    {
+      "block": "V240-V262",
+      "source_slice": "[x for x in nans_groups[460110] if (int(x[1:])>237)&(int(x[1:])<263)]",
+      "groups": [
+        [
+          "V240",
+          "V241"
+        ],
+        [
+          "V242",
+          "V243",
+          "V244",
+          "V258"
+        ],
+        [
+          "V246",
+          "V257"
+        ],
+        [
+          "V247",
+          "V248",
+          "V249",
+          "V253",
+          "V254"
+        ],
+        [
+          "V252"
+        ],
+        [
+          "V260"
+        ],
+        [
+          "V261",
+          "V262"
+        ]
+      ]
+    },
+    {
+      "block": "V263-V278",
+      "source_slice": "[x for x in nans_groups[460110] if (int(x[1:])>262)]",
+      "groups": [
+        [
+          "V263",
+          "V265",
+          "V264"
+        ],
+        [
+          "V266",
+          "V269"
+        ],
+        [
+          "V267",
+          "V268"
+        ],
+        [
+          "V273",
+          "V274",
+          "V275"
+        ],
+        [
+          "V276",
+          "V277",
+          "V278"
+        ]
+      ]
+    },
+    {
+      "block": "V220-V272",
+      "source_slice": "nans_groups[449124]",
+      "groups": [
+        [
+          "V220"
+        ],
+        [
+          "V221",
+          "V222",
+          "V227",
+          "V245",
+          "V255",
+          "V256",
+          "V259"
+        ],
+        [
+          "V234"
+        ],
+        [
+          "V238",
+          "V239"
+        ],
+        [
+          "V250",
+          "V251"
+        ],
+        [
+          "V270",
+          "V271",
+          "V272"
+        ]
+      ]
+    },
+    {
+      "block": "V279-V299",
+      "source_slice": "[x for x in nans_groups[12] if int(x[1:])<302]",
+      "groups": [
+        [
+          "V279",
+          "V280",
+          "V293",
+          "V294",
+          "V295",
+          "V298",
+          "V299"
+        ],
+        [
+          "V284"
+        ],
+        [
+          "V285",
+          "V287"
+        ],
+        [
+          "V286"
+        ],
+        [
+          "V290",
+          "V291",
+          "V292"
+        ],
+        [
+          "V297"
+        ]
+      ]
+    },
+    {
+      "block": "V302-V321",
+      "source_slice": "[x for x in nans_groups[12] if int(x[1:])>299]",
+      "groups": [
+        [
+          "V302",
+          "V303",
+          "V304"
+        ],
+        [
+          "V305"
+        ],
+        [
+          "V306",
+          "V307",
+          "V308",
+          "V316",
+          "V317",
+          "V318"
+        ],
+        [
+          "V309",
+          "V311"
+        ],
+        [
+          "V310",
+          "V312"
+        ],
+        [
+          "V319",
+          "V320",
+          "V321"
+        ]
+      ]
+    },
+    {
+      "block": "V281-V315",
+      "source_slice": "nans_groups[1269]",
+      "groups": [
+        [
+          "V281"
+        ],
+        [
+          "V282",
+          "V283"
+        ],
+        [
+          "V288",
+          "V289"
+        ],
+        [
+          "V296"
+        ],
+        [
+          "V300",
+          "V301"
+        ],
+        [
+          "V313",
+          "V314",
+          "V315"
+        ]
+      ]
+    },
+    {
+      "block": "V322-V339",
+      "source_slice": "nans_groups[508189]",
+      "groups": [
+        [
+          "V322",
+          "V323",
+          "V324",
+          "V326",
+          "V327",
+          "V328",
+          "V329",
+          "V330",
+          "V331",
+          "V332",
+          "V333"
+        ],
+        [
+          "V325"
+        ],
+        [
+          "V334",
+          "V335",
+          "V336"
+        ],
+        [
+          "V337",
+          "V338",
+          "V339"
+        ]
+      ]
+    }
+  ]
+}

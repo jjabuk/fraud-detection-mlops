@@ -1,0 +1,75 @@
+# Push the scoring image on merge.
+#
+# This is the cheapest honest version of "automated CI/CD" for this project: there is a
+# real deployable artefact, so automating its build and push is automation of something
+# rather than a workflow file that exists to be pointed at. What it deliberately does not
+# do is apply Terraform -- rolling the job onto the new image is a `tofu apply` with the
+# tag this workflow printed, and taking that decision away from a human buys nothing here.
+name: Image
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Workload Identity Federation: GitHub mints a short-lived OIDC token that GCP trades
+  # for credentials. No service-account key ever exists to be committed or leaked.
+  id-token: write
+
+env:
+  IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/fraud-detection/fraud-detection
+
+jobs:
+  push:
+    name: Build and push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # The git SHA is the tag that matters: `tofu apply -var image_tag=<sha>` is what
+          # rolls the job forward, and an immutable tag is what makes rolling it back a
+          # matter of applying the previous one. `latest` is a convenience for a human
+          # doing a local `docker run`, and nothing in iaac/ refers to it.
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          # Baked into the image so a container can report the commit it was built from --
+          # every model it trains and every row it scores carries this value. See
+          # src/fraud_detection/core/provenance.py.
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+          # SLSA provenance and an SBOM, attached to the pushed manifest as OCI referrers
+          # rather than kept in a CI artifact nobody can reach from the registry. `mode=max`
+          # records the build's materials and parameters, not just its outcome: it is what
+          # makes "which source produced this digest?" answerable by whoever pulls the
+          # image, including future me during an incident.
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Report the tag to apply
+        run: |
+          echo "### Image pushed" >> "$GITHUB_STEP_SUMMARY"
+          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
+          echo "cd iaac && tofu apply -var image_tag=${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

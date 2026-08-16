@@ -1,0 +1,4 @@
+# Copy this file to terraform.auto.tfvars and fill in your GCP project ID.
+# This file is ignored by git, so your project ID will not be committed.
+project_id = "your-project-id"
+image_tag = "your-image-tag"

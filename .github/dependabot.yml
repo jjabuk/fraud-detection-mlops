@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # GitHub Actions package updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+
+  # IaC dependency updates (Terraform/OpenTofu)
+  - package-ecosystem: "terraform"
+    directory: "/iaac"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "iaac"
+
+  # Python package updates
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"

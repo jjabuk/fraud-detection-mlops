@@ -1,0 +1,30 @@
+# What `gcloud builds submit` uploads as build context.
+#
+# This file exists because gcloud does **not** read .dockerignore. Without it, gcloud
+# derives the context from .gitignore, which does not exclude `kaggle/raw/` — 1.3 GB of
+# competition CSVs uploaded on every build, to be discarded by the Dockerfile anyway.
+#
+# Keep in step with .dockerignore: that one decides what lands in the image, this one
+# decides what leaves the machine.
+.git
+.github
+.venv
+.dagster_home
+.pytest_cache
+.ruff_cache
+__pycache__
+**/__pycache__
+*.pyc
+.env
+.env.example
+data/
+kaggle/
+models/
+eda/
+docs/
+iaac/
+tests/
+*.duckdb
+*.csv
+*.parquet
+.DS_Store

@@ -1,0 +1,60 @@
+[gcp]
+location = "europe-central2"
+
+[storage]
+raw_dump_gcs_uri = "gs://{project_id}-raw-data/ieee-cis/train_transaction.csv"
+identity_raw_dump_gcs_uri = "gs://{project_id}-raw-data/ieee-cis/train_identity.csv"
+
+# The Kaggle test period. Scored, never trained on -- it carries no isFraud column at all,
+# which is also why loading it needs the training schema with that one field removed.
+test_dump_gcs_uri = "gs://{project_id}-raw-data/ieee-cis/test_transaction.csv"
+test_identity_dump_gcs_uri = "gs://{project_id}-raw-data/ieee-cis/test_identity.csv"
+
+[vertex]
+experiment_name = "fraud-detection"
+model_display_name = "fraud-lightgbm"
+
+# The custom serving container Model.upload registers the artifact against. Empty means
+# "no image built yet": the gate then writes the promotion marker and says so, rather than
+# registering the model against a prebuilt image that cannot actually serve LightGBM.
+# CI sets SERVING_IMAGE_URI to the immutable git-SHA tag it just pushed.
+serving_image_uri = ""
+serving_health_route = "/health"
+serving_predict_route = "/predict"
+serving_port = 8080
+
+[gate]
+production_alias = "production"
+promotion_marker_path = "promoted/production.json"
+# Both were 0.0, which made the two checks they govern unconditional passes: any model
+# clears `>= baseline × 0.0`. Raised to the values docs/MEASUREMENTS.md had been
+# documenting all along, and the current run clears both with room — test PR-AUC 0.5175
+# against 0.0635 × 1.10 = 0.0699, and unseen-entity PR-AUC 0.5338 against 0.0635.
+# What "above baseline" is measured against. The BQML logistic regression returned exactly
+# 0.0635 on every run since the 2026-08-16 reload; it is one CREATE MODEL statement over
+# fixed columns on a fixed split, so re-deriving it before each gate was ~90s of BigQuery
+# to recompute a constant. Pinned here so a change is a reviewable diff.
+# Re-derive with: dagster asset materialize --select fraud_detection/bqml_baseline
+baseline_pr_auc = 0.0635
+min_pr_auc_lift = 1.10
+min_unseen_segment_ratio = 1.0
+max_expected_calibration_error = 0.02
+max_false_positive_drift = 1.25
+# The segment holding most of the traffic must beat its own base rate by this much.
+# Measured 2026-08-16 on contract bdb97707: ProductCD == "W" is 45,426 of 59,054 test rows
+# (77%) at PR-AUC 0.2130 over a 0.0198 positive rate -- a lift of 10.75. The four checks
+# above would all have passed a model useless on three quarters of the traffic, because
+# every one of them reads a number pooled across products.
+# 5.0 sits below what the current model achieves and above chance; raise it once a run has
+# established what good looks like on this axis.
+min_dominant_segment_lift = 5.0
+dominant_segment_share = 0.50
+
+[feature_audit]
+partition_file = "references/column-groups-v.json"
+contract_file = "references/feature-contract.json"
+
+[explainability]
+sample_size = 5000
+top_features = 25
+individual_explanations = 5

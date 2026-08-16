@@ -1,0 +1,18 @@
+# Two code locations, one Dagster deployment.
+#
+# They load in separate processes and could be deployed separately, but the lineage graph
+# spans both: the model factory declares `model_input` and `feature_contract` as external
+# assets keyed to the platform's real ones. That is the seam -- visible in the UI, checked
+# by the run, and reversible, which two repositories would not be.
+load_from:
+  - python_module:
+      module_name: fraud_detection.orchestration.definitions.feature_platform
+      location_name: feature_platform
+
+  - python_module:
+      module_name: fraud_detection.orchestration.definitions.model_factory
+      location_name: model_factory
+
+  - python_module:
+      module_name: fraud_detection.orchestration.definitions.inference
+      location_name: inference

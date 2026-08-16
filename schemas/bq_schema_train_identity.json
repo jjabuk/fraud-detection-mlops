@@ -1,0 +1,207 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "TransactionID",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_01",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_02",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_03",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_04",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_05",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_06",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_07",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_08",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_09",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_10",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_11",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_12",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_13",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_14",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_15",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_16",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_17",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_18",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_19",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_20",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_21",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_22",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_23",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_24",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_25",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_26",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_27",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_28",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_29",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_30",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_31",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_32",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_33",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_34",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_35",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_36",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_37",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "id_38",
+    "type": "BOOLEAN"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "DeviceType",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "DeviceInfo",
+    "type": "STRING"
+  }
+]

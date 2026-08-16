@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Dagster local runtime state. DAGSTER_HOME points here (see .env), kept
+# separate from dagster/ so that folder holds only tracked config
+# (dagster.yaml, workspace.yaml) with no runtime noise mixed in.
+.dagster_home/
+# Jupyter
+.ipynb_checkpoints/
+
+# Local data artifacts
+data/raw/*.zip
+data/local/
+
+# Terraform/OpenTofu local artifacts
+**/.terraform/
+*.tfstate
+*.tfstate.*
+
+# Local env vars (GCP credentials paths, etc.)
+.env
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# raw competition data — fetch with `uv run python kaggle/download.py`
+kaggle/input/
+kaggle/submissions/
+
+# generated reports — the notebook writes these to whatever it is run from
+notebooks/*.log
+notebooks/*.csv
+*_report.csv
+notebooks/reference.json
+# generated artefacts — the notebook writes these where it runs
+reference.json
+psi.csv
+adversarial.csv
+time_consistency_report.csv.cache/
+.cache/
