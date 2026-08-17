@@ -1,6 +1,7 @@
 # Architecture
 
-What this system is built from and why it is shaped this way. Numbers live in
+What this system is built from and why it is shaped this way. The GCP service choices and the
+platform-specific details are in [google-cloud.md](google-cloud.md). Numbers live in
 [MEASUREMENTS.md](MEASUREMENTS.md), the leakage guarantee in
 [point-in-time.md](point-in-time.md), the import rules in
 [code-structure.md](code-structure.md), and the Dagster layout in

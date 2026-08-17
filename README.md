@@ -9,7 +9,7 @@ Cloud Run Job does the scoring. Infrastructure is OpenTofu, CI is GitHub Actions
 | --- | --- |
 | The data and the modelling | [`eda/`](eda/README.md), 51 notebooks with one question each, then [the six audits](src/fraud_detection/evaluation/README.md) |
 | The pipeline and its boundaries | [orchestration.md](docs/orchestration.md), including the three asset graphs as a running instance renders them, then [code-structure.md](docs/code-structure.md) |
-| The infrastructure | [`iaac/`](iaac/README.md) for the OpenTofu, [setup.md](docs/setup.md) for the runbook, `.github/workflows/` for CI |
+| The cloud and the infrastructure | [google-cloud.md](docs/google-cloud.md) for the service choices, [`iaac/`](iaac/README.md) for the OpenTofu, [setup.md](docs/setup.md) for the runbook |
 | Whether the results hold up | [MEASUREMENTS.md](docs/MEASUREMENTS.md) for the numbers, [DECISIONS.md](DECISIONS.md) for what was reversed |
 | Risk and model governance | [model-card.md](docs/model-card.md), [point-in-time.md](docs/point-in-time.md), [adversarial-drift.md](docs/adversarial-drift.md) |
 
@@ -125,6 +125,7 @@ the pipeline against the full dataset needs a GCP project, see [docs/setup.md](d
 | [DECISIONS.md](DECISIONS.md) | Architectural decisions, dated, with the evidence behind each |
 | [ATTRIBUTION.md](ATTRIBUTION.md) | What came from published Kaggle work and what this repository does differently |
 | [docs/architecture.md](docs/architecture.md) | Modules, boundaries, and what is out of scope |
+| [docs/google-cloud.md](docs/google-cloud.md) | Which GCP services are used, which are not, and the platform details behind both |
 | [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) | Every number and how far it can be trusted |
 | [docs/point-in-time.md](docs/point-in-time.md) | The leakage guarantee and its enforcement |
 | [docs/feature-engineering.md](docs/feature-engineering.md) | The twelve engineered features and their entities |

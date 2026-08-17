@@ -48,6 +48,7 @@ Every performance figure is a property of one trained artifact rather than of th
 | What that model scored | `metrics.json` beside the artifact: overall, per client segment, per product |
 | Which columns it could see, and why the rest were rejected | [`references/feature-contract.json`](../references/feature-contract.json) |
 | How large a difference has to be before it means anything | [MEASUREMENTS.md](MEASUREMENTS.md) |
+| What the model looks like at and around its operating point | the figures written beside the artifact, listed below |
 
 Read any performance number against the noise band. A single training run does not resolve
 small differences, and treating one as an improvement is the most common way to mislead
@@ -72,6 +73,27 @@ with them means disagreeing with a stated number.
 At a tight budget this model misses a large share of fraud, and misses more by value than by
 count: the transactions it lets through are larger than the ones it catches. The budget is the
 binding constraint, not the model.
+
+### The figures every run produces
+
+Written as PNG into the run's artifact directory beside `metrics.json`, with their URIs in the
+Dagster materialization metadata. They are not embedded in this card, because each belongs to
+one run and a card carrying a stale picture is worse than one that says where the current
+picture lives. All six come from
+[`training/plots.py`](../src/fraud_detection/training/plots.py), which draws only numbers the
+run already computed.
+
+| Figure | What it answers |
+| --- | --- |
+| `cost_curve.png` | Total cost against threshold, with the budget-driven and cost-minimising thresholds marked. The horizontal gap between them is the price of the friction policy, in the currency of the cost model above, and the curve's flatness says how much the exact threshold matters at all. |
+| `precision_recall.png` | Where on the curve the operating point sits, against the base rate a random ranker would achieve. |
+| `score_distribution.png` | How far apart the two classes are on the calibrated scale, and how much mass sits immediately below the threshold. |
+| `reliability.png` | Whether a claimed probability happens at that rate, which is what the gate's calibration check asserts in one number. |
+| `segments.png` | PR-AUC per segment against the base rate, so the pooled figure cannot hide the dominant segment carrying it. |
+| `roc.png` | Plotted for completeness. At a 3.5% positive rate it flatters every model, which is why nothing is gated on it. |
+
+The cost curve is the one to read first when the budget is being argued about, because it is
+the only figure here that shows what the policy costs rather than how the model ranks.
 
 ## 4. Structural weaknesses
 
