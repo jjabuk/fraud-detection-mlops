@@ -19,7 +19,13 @@ import pathlib
 from fraud_detection.orchestration.definitions.feature_platform import defs as feature_platform
 from fraud_detection.orchestration.definitions.model_factory import defs as model_factory
 
-LOCATIONS = pathlib.Path(__file__).resolve().parents[1] / "src" / "fraud_detection" / "definitions"
+LOCATIONS = (
+    pathlib.Path(__file__).resolve().parents[1]
+    / "src"
+    / "fraud_detection"
+    / "orchestration"
+    / "definitions"
+)
 
 # Everything the model factory consumes and does not build. The whole seam, in one list.
 SEAM = {"fraud_detection/model_input", "fraud_detection/feature_contract"}
@@ -53,7 +59,12 @@ def test_the_factory_builds_nothing_the_platform_builds():
 
 
 def test_neither_location_imports_the_other():
-    for path in sorted(LOCATIONS.glob("*.py")):
+    paths = [LOCATIONS / f"{stem}.py" for stem in ("feature_platform", "model_factory")]
+    # Guard against the loop silently emptying if the modules move again: this test passed
+    # for as long as LOCATIONS pointed at a directory that no longer existed.
+    assert all(p.is_file() for p in paths), f"code location modules not found under {LOCATIONS}"
+
+    for path in paths:
         other = "model_factory" if path.stem == "feature_platform" else "feature_platform"
         for node in ast.walk(ast.parse(path.read_text())):
             module = getattr(node, "module", None) or ""
