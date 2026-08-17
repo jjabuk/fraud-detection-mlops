@@ -1,127 +1,121 @@
-# Feature Engineering
+# Feature engineering
 
-> What the feature store holds, what it deliberately does not, and how the model's input is
-> assembled from two tables rather than one.
-> Leakage guarantee: [point-in-time.md](point-in-time.md) · Dataset shape: [../eda/README.md](../eda/README.md) ·
-> Implementation: [`feature_engineering.py`](../src/fraud_detection/assets/feature_engineering.py)
+What the feature table holds, what it does not, and how the model input is assembled from two
+tables rather than one. The leakage guarantee behind every aggregate here is in
+[point-in-time.md](point-in-time.md); the SQL is in
+[`feature_engineering/features.py`](../src/fraud_detection/feature_engineering/features.py).
 
----
+## 1. Two tables, joined at training time
 
-## 1. The feature store is a table of *entity state*, not of model input
+The training matrix is `raw.ieee_train_joined` joined to `features.transaction_features` on
+`TransactionID`.
 
-`features.transaction_features` holds nineteen columns: seven passed through from raw and
-twelve engineered. It does not hold the roughly four hundred predictive columns that the
-model actually trains on. That is not an omission — it is the design, and this document
-exists because the reason is not obvious from looking at the table.
+Serving input is `request fields + retrieved entity state`, so training assembles the same
+shape: the raw transaction on one side, the retrieved entity state on the other. Widening the
+feature table to hold raw predictors, or pushing velocity aggregates into the raw table, would
+create a second code path that only training uses.
 
----
+That is also why `features.transaction_features` does not hold the ~400 predictive columns the
+model trains on. It is a table of entity state, not of model input.
 
-## 2. Decision: the model input is assembled from two tables
+## 2. What is in each table
 
-**Decision.** The training matrix is `raw.ieee_train_joined` joined to `features.transaction_features` on `TransactionID`.
+### `raw.ieee_train_joined`, 435 columns
 
-**Why:** Serving time input is `request fields + retrieved entity state`. Therefore, training must assemble the exact same input by joining the raw transaction table with the retrieved feature table. Widening the feature table to hold raw predictors or pushing velocity aggregates into the raw table creates divergent code paths (training-serving skew).
+`transaction` left-joined to `identity` on `TransactionID`, plus `null_count_V_block`. Every
+column is a property of the transaction itself, so nothing here can leak.
 
----
+### `features.transaction_features`, 47 columns
 
-## 3. What is in each table
+Seven columns carried through (`TransactionID`, `TransactionDT`, `TransactionAmt`, `card1`,
+`DeviceInfo`, `client_uid`, `isFraud`) so the table is independently inspectable, twelve core
+aggregates, and a configurable block of client-level uid aggregates.
 
-### `raw.ieee_train_joined` — 435 columns
+The twelve are listed in
+[`core/schema.py`](../src/fraud_detection/core/schema.py) as `FEATURE_COLUMNS`, which the SQL
+that builds them, the assembly that names them and the contract that classifies them as
+retrieved-at-serving-time all read from.
 
-`transaction` left-joined to `identity` on `TransactionID`, plus `null_count_V_block`.
-Every column is a property of the transaction itself. Nothing here is derived from other
-rows, so nothing here can leak. See [architecture.md](architecture.md), Module 1.
+| Column | Definition | Entity | In the contract |
+| --- | --- | --- | --- |
+| `card_txn_count_1h` | Transactions on this card in the preceding hour | `card1` | admitted |
+| `card_txn_count_24h` | Transactions on this card in the preceding 24h | `card1` | admitted |
+| `card_txn_amt_avg_24h` | Mean amount on this card over the preceding 24h | `card1` | admitted |
+| `card_txn_amt_sum_24h` | Total amount on this card over the preceding 24h | `card1` | admitted |
+| `card_amt_deviation_24h` | `TransactionAmt` minus the 24h mean above | `card1` | admitted |
+| `seconds_since_prev_txn_card` | Gap to the card's previous transaction | `card1` | admitted |
+| `device_txn_count_24h` | Transactions on this device in the preceding 24h | `DeviceInfo` | rejected, PSI 0.890 |
+| `client_txn_count_prior` | Transactions by this client, ever, before this one | `client_uid` | rejected, PSI 0.539 |
+| `client_txn_count_24h` | Transactions by this client in the preceding 24h | `client_uid` | admitted |
+| `client_amt_avg_prior` | Mean amount over the client's prior transactions | `client_uid` | admitted |
+| `client_amt_deviation_prior` | `TransactionAmt` minus that mean | `client_uid` | rejected, time consistency −0.12 |
+| `seconds_since_prev_txn_client` | Gap to the client's previous transaction | `client_uid` | rejected, PSI 0.597 |
 
-### `features.transaction_features` — 19 columns
+The uid block is declared in [`config/feature-admission.toml`](../config/feature-admission.toml)
+and generated into the same statement: the standard deviation of six derived `D` columns and
+the mean of fourteen `C` and eight `M` columns over the client's prior transactions, 28 columns
+at current settings. The contract judges them like anything else, and currently admits seven:
+`time_consistency` rejects nineteen and `distribution_shift` two. Those nineteen are the ones a
+policy override used to readmit, until the override was measured at −0.0002 ROC-AUC and
+retired ([MEASUREMENTS.md](MEASUREMENTS.md)).
 
-Twelve engineered aggregates over three entities. The list lives in one place,
-[`schema.FEATURE_COLUMNS`](../src/fraud_detection/schema.py), which the SQL that builds
-them, the assembly that names them, and the contract that classifies them as
-retrieved-at-serving-time all read.
+Computed but rejected columns still cost a BigQuery statement and nothing else: they never
+reach the model, and the contract records why.
 
-| Column | Definition | Entity |
-| --- | --- | --- |
-| `card_txn_count_1h` | Transactions on this card in the preceding hour | `card1` |
-| `card_txn_count_24h` | Transactions on this card in the preceding 24h | `card1` |
-| `card_txn_amt_avg_24h` | Mean amount on this card over the preceding 24h | `card1` |
-| `card_txn_amt_sum_24h` | Total amount on this card over the preceding 24h | `card1` |
-| `card_amt_deviation_24h` | `TransactionAmt` minus the 24h mean above | `card1` |
-| `seconds_since_prev_txn_card` | Gap to the card's previous transaction | `card1` |
-| `device_txn_count_24h` | Transactions on this device in the preceding 24h | `DeviceInfo` |
-| `client_txn_count_prior` | Transactions by this client, ever, before this one | `client_uid` |
-| `client_txn_count_24h` | Transactions by this client in the preceding 24h | `client_uid` |
-| `client_amt_avg_prior` | Mean amount over the client's prior transactions | `client_uid` |
-| `client_amt_deviation_prior` | `TransactionAmt` minus that mean | `client_uid` |
-| `seconds_since_prev_txn_client` | Gap to the client's previous transaction | `client_uid` |
+### The client entity
 
-Plus `TransactionID` (the join key), `TransactionDT`, `TransactionAmt`, `card1`,
-`DeviceInfo`, `client_uid` and `isFraud`, carried so the table is independently
-inspectable. `client_uid` is an entity key and never a feature — it is excluded by
-[`schema.EXCLUDED_COLUMNS`](../src/fraud_detection/schema.py) and the exclusion is pinned
-by a test.
+`client_uid` is `card1 + addr1 + (day − D1)`, where `D1` is days since the card began, so
+`day − D1` recovers the day it began and is constant across that client's history. It reaches
+98.5% label purity against 84.8% for `card1`. The reconstruction is measured by
+[`evaluation/entity_purity.py`](../src/fraud_detection/evaluation/entity_purity.py) and pinned
+by a test. Every client aggregate is computed over this grouping rather than over `card1`.
 
-**The client entity.** `card1 + addr1 + (day − D1)`, where `D1` is days since the card
-began, so `day − D1` recovers the day it began — a constant across that client's history.
-It reaches 98.5% label purity against 84.8% for `card1`; the reconstruction, and the reason
-its real value is an honest cold-entity denominatorThis is the Entity Purity claim. It is measured and pinned by a test: see
-[../src/fraud_detection/evaluation/README.md](../src/fraud_detection/evaluation/README.md). Every client aggregate is
-computed over this reconstructed grouping rather than over `card1`.econstructable id.
+`client_uid` is an entity key and never a feature; it is listed in `schema.EXCLUDED_COLUMNS`
+and the exclusion is pinned by a test.
 
-### Computing them yourself
+### Null entities
 
-The statement lives in [`fraud_detection.features`](../src/fraud_detection/features.py),
-not in the Dagster asset, and runs on two engines: BigQuery in the pipeline, DuckDB in a
-notebook. Same SQL, so there is no second definition of a feature to drift.
+`card1` has no nulls. `DeviceInfo` is present on 118,666 rows of 590,540.
 
-```python
-import polars as pl
-from fraud_detection.features import compute_locally
+A defect found on 2026-08-10: SQL places every NULL in the same window partition, so
+`COUNT(*) OVER device_24h` was counting other device-less transactions on the 471,874 rows
+without a device, which produced a feature that looked informative and measured nothing. Every
+device and client aggregate is now `NULL` when its entity key is `NULL`.
 
-tx = pl.read_csv("kaggle/raw/train_transaction.csv",
-                 columns=["TransactionID", "TransactionDT", "TransactionAmt",
-                          "isFraud", "card1", "addr1", "D1"])
-identity = pl.read_csv("kaggle/raw/train_identity.csv",
-                       columns=["TransactionID", "DeviceInfo"])
+## 3. Assembly
 
-features = compute_locally(tx.join(identity, on="TransactionID", how="left"))
-```
+`features.model_input` is the join: every column of the raw joined table, plus the engineered
+columns named explicitly from `FEATURE_COLUMNS` and the uid block. Overlapping pass-through
+columns come from the raw side only.
 
-590,540 rows in **1.7 s**, no cloud. It reproduces the pipeline's numbers exactly: 11.3%
-null `client_uid`, 199,070 distinct clients, 79.9% null `device_txn_count_24h`, and
-`seconds_since_prev_txn_card` null on exactly 13,553 rows — the number of distinct `card1`
-values, which is the consistency check that the windows mean what they claim.
+Naming the columns from one constant means the assembly cannot silently drop a feature that
+feature engineering started producing. A `SELECT *` on the feature side would have been shorter
+and would have reintroduced the six duplicated pass-through columns.
 
-One caveat the docstring repeats: velocity aggregates count an entity's *neighbours*, so a
-random row sample undercounts them. Slice a contiguous period, or read the whole file.
+## 4. Where the SQL lives
 
-Every one of the twelve is computed over a `RANGE … 1 PRECEDING` frame. "Preceding" means
-strictly earlier — never the current transaction, never a peer sharing its exact
-timestamp. That guarantee, the failure modes it defends against, and the leak that was
-found and fixed on 2026-08-10 are documented in [point-in-time.md](point-in-time.md).
+The statement is built by `build_sql(...)` in `feature_engineering/features.py`, not embedded
+in the Dagster asset. The asset supplies table names and calls it, which is what lets the tests
+assert on the generated SQL without a warehouse and lets the uid block be generated from
+config rather than hand-maintained.
 
-**The asymmetry in the entity columns, and the bug it caused.** `card1` has zero nulls. `DeviceInfo` is present on only 118,666 rows.
+Shape of the output on the full dataset: 590,540 rows, 11.3% null `client_uid`, 199,070
+distinct clients, 79.9% null `device_txn_count_24h`, and `seconds_since_prev_txn_card` null on
+exactly 13,553 rows, which is the number of distinct `card1` values.
 
-Defect found 2026-08-10: SQL places every NULL in the same window partition. `COUNT(*) OVER device_24h` counted other device-less transactions on the 471,874 rows with no device, creating a false signal. Fixed by making the aggregate `NULL` when `DeviceInfo` is `NULL`.
-
----
-
-## 4. Assembly
-
-`features.model_input` is the join: every column of the raw joined table, plus the seven
-engineered columns named explicitly. The overlapping pass-through columns come from the
-raw side only, so nothing is duplicated.
-
-The engineered column names live in one constant, `FEATURE_COLUMNS`, so the assembly can
-never silently drop a feature that feature engineering started producing. A `SELECT *` on
-the feature side would have been shorter and would have re-introduced the six duplicated
-pass-through columns.
-
----
+One caveat when sampling: velocity aggregates count an entity's neighbours, so a random row
+sample undercounts them. Slice a contiguous period, or read the whole file.
 
 ## 5. Deliberately absent
 
-**Reduction of `V1–V339`.** 129 representatives out of 339 (62% cut) were found. See [../src/fraud_detection/evaluation/README.md](../src/fraud_detection/evaluation/README.md). Full block stays until retraining cost is measured.
+**Reduction of `V1–V339`.** The redundancy audit found 129 representatives out of 339, a 62%
+cut. The full block stays until the retraining cost of dropping it is measured. See
+[`evaluation/README.md`](../src/fraud_detection/evaluation/README.md).
 
-**Online-shaped features.** `features.transaction_features` is keyed by `TransactionID`. Serving needs one row per entity, current state.
+**Online-shaped features.** This table is keyed by `TransactionID`. Serving would need one row
+per entity holding current state, which is the lookup described in
+[architecture.md](architecture.md) §5.
 
-**A cold-entity denominator in the gate.** The gate segments by `card1`. 98.9% of holdout rows sit on a card already seen in training. Repointing the gate at `client_uid` drops the seen share to 51.5%.
+**A cold-entity denominator on `card1`.** The gate segments by client rather than card: 98.9%
+of holdout rows sit on a card already seen in training, so a per-card version of that check
+would ask almost nothing. On `client_uid` the seen share drops to 51.5%.

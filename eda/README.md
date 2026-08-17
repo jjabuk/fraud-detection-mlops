@@ -1,19 +1,16 @@
 # Exploratory analysis
 
-One notebook, one question. Each is named after the question it answers and runs on its own
-— the setup it needs is carried into it, so no notebook depends on another having been run
-first.
+One notebook per question, named after the question. Each runs on its own: the setup it needs
+is carried into it, so no notebook depends on another having been run first.
 
-Notebooks import the **same modules the pipeline runs** (`fraud_detection.evaluation`,
-`fraud_detection.training`), enforced by a layering test. An analysis here cannot quietly
-measure a different implementation from the one that reaches production.
+Notebooks import the same modules the pipeline runs (`fraud_detection.evaluation`,
+`fraud_detection.training`), which is enforced by
+[`tests/test_layering.py`](../tests/test_layering.py). An analysis here cannot measure a
+different implementation from the one that reaches production.
 
-Where a technique comes from published Kaggle work, the notebook says so in its first cell
-and [ATTRIBUTION.md](../ATTRIBUTION.md) records what was taken and what is this
-repository's.
-
-Data is not committed. See [docs/setup.md](../docs/setup.md).
-
+Where a technique comes from published Kaggle work, the notebook says so in its first cell and
+[ATTRIBUTION.md](../ATTRIBUTION.md) records what was taken. Data is not committed, see
+[docs/setup.md](../docs/setup.md).
 
 ## The data, before any modelling
 
@@ -69,8 +66,7 @@ Data is not committed. See [docs/setup.md](../docs/setup.md).
 - [Does rarity predict fraud, and in which columns?](notebooks/does-rarity-predict-fraud.ipynb)
 - [What shape do one-hot and frequency encoding actually have on this data?](notebooks/what-shape-do-the-two-encodings-have.ipynb)
 - [Does either encoding move the model beyond the noise band?](notebooks/does-either-encoding-move-the-model.ipynb)
-- [Which encoded columns survived the audits?](notebooks/which-encoded-columns-survived-the-audits.ipynb)
-- [Where does an encoding help — seen clients or unseen ones?](notebooks/where-does-an-encoding-help-seen-or-unseen-clients.ipynb)
+- [Where does an encoding help, on seen clients or unseen ones?](notebooks/where-does-an-encoding-help-seen-or-unseen-clients.ipynb)
 
 ## What the contract decided, and whether it was worth it
 
@@ -91,6 +87,4 @@ Data is not committed. See [docs/setup.md](../docs/setup.md).
 - [How fast does performance decay as the scoring window moves away from training?](notebooks/how-fast-does-performance-decay-after-training.ipynb)
 - [Is that decay time, or is it population mix?](notebooks/is-that-decay-time-or-population-mix.ipynb)
 
----
-
-52 notebooks.
+51 notebooks.
