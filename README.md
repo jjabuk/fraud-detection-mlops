@@ -8,7 +8,7 @@ Cloud Run Job does the scoring. Infrastructure is OpenTofu, CI is GitHub Actions
 | If you came here for | Start at |
 | --- | --- |
 | The data and the modelling | [`eda/`](eda/README.md), 51 notebooks with one question each, then [the six audits](src/fraud_detection/evaluation/README.md) |
-| The pipeline and its boundaries | [orchestration.md](docs/orchestration.md), then [code-structure.md](docs/code-structure.md) |
+| The pipeline and its boundaries | [orchestration.md](docs/orchestration.md), including the three asset graphs as a running instance renders them, then [code-structure.md](docs/code-structure.md) |
 | The infrastructure | [`iaac/`](iaac/README.md) for the OpenTofu, [setup.md](docs/setup.md) for the runbook, `.github/workflows/` for CI |
 | Whether the results hold up | [MEASUREMENTS.md](docs/MEASUREMENTS.md) for the numbers, [DECISIONS.md](DECISIONS.md) for what was reversed |
 | Risk and model governance | [model-card.md](docs/model-card.md), [point-in-time.md](docs/point-in-time.md), [adversarial-drift.md](docs/adversarial-drift.md) |
@@ -88,17 +88,6 @@ Each of these is seed-averaged and reported against the band above.
 
 Full workings, including the ones later reversed, are in
 [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) and [DECISIONS.md](DECISIONS.md).
-
-## The three code locations
-
-Exported from a running Dagster instance. Layout and grouping are described in
-[docs/orchestration.md](docs/orchestration.md).
-
-| Job | Scope | Graph |
-| --- | --- | --- |
-| `feature_platform_job` | Raw CSV to a committed feature contract, with the audits behind it | ![feature_platform_job](docs/img/feature_platform_job.svg) |
-| `model_factory_job` | Splits, baseline, training, explainability, promotion gate | ![model_factory_job](docs/img/model_factory_job.svg) |
-| `inference_job` | The scoring path, run to completion by a Cloud Run Job | ![inference_job](docs/img/inference_job.svg) |
 
 ## Stack
 

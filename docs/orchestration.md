@@ -10,26 +10,27 @@ separate dependency sets.
 
 ```mermaid
 graph LR
-    subgraph FP["feature_platform"]
-        A1[raw ingestion] --> A2[join] --> A3[transaction_features] --> A4[model_input]
-        A2 --> A5[audits] --> A6[feature_contract]
-    end
-    subgraph MF["model_factory"]
-        B1[split_assignment] --> B2[lightgbm_model] --> B3[model_explanations] --> B4[validation_gate]
-        B5[bqml_baseline] --> B4
-    end
-    subgraph INF["inference"]
-        C1[kaggle_test_joined] --> C2[scoring_history] --> C3[kaggle_test_model_input] --> C4[kaggle_submission]
-        C5[best_model] --> C4
-    end
-    A4 -.->|external asset| B1
-    A6 -.->|external asset| B2
-    B4 -.->|promotion marker| C5
+    FP[feature_platform] -.->|model_input| MF[model_factory]
+    FP -.->|feature-contract.json| MF
+    MF -.->|promotion marker| INF[inference]
 ```
 
 The dotted edges cross locations. Dagster models them as `AssetSpec` stubs: a location
 declares the key it depends on without importing the code that produces it, so the graph is
-complete in the UI while the processes stay independent.
+complete in the UI while the processes stay independent. No job renders those edges, because
+each job runs inside one location, which is why they are drawn here and nowhere below.
+
+What each location actually contains, exported from a running instance rather than drawn by
+hand:
+
+| Job | Scope | Graph |
+| --- | --- | --- |
+| `feature_platform_job` | Raw CSV to a committed feature contract, with the audits behind it | ![feature_platform_job](img/feature_platform_job.svg) |
+| `model_factory_job` | Splits, baseline, training, explanations, promotion gate | ![model_factory_job](img/model_factory_job.svg) |
+| `inference_job` | The scoring path, run to completion by a Cloud Run Job | ![inference_job](img/inference_job.svg) |
+
+The group boxes in those renderings are §2 and the engine badges are the `kinds` labels from
+§6.
 
 The split follows the trigger. The feature platform runs when the data changes, the model
 factory when the recipe changes, and inference when a model is promoted. Three cadences, three
