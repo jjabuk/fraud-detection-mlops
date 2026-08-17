@@ -36,19 +36,24 @@ def _mock_bigquery_client(monkeypatch: pytest.MonkeyPatch, *, num_rows: int = 5)
     return mock_client
 
 
-def test_bigquery_asset_local_source_uses_load_table_from_file(monkeypatch):
+SAMPLE_CSV = (
+    b"TransactionID,TransactionDT,TransactionAmt,isFraud,DeviceInfo,id_01\n"
+    b"1,100,10.0,0,Windows,0.5\n"
+)
+
+
+def test_bigquery_asset_local_source_uses_load_table_from_file(monkeypatch, tmp_path):
+    # The CSV is written here rather than read from data/raw/: the competition terms do not
+    # allow redistributing the dataset, so nothing under data/raw/ exists on a fresh clone
+    # and a test reading it would pass only on the machine that happened to have the file.
+    source = tmp_path / "train_transaction_sample.csv"
+    source.write_bytes(SAMPLE_CSV)
     mock_client = _mock_bigquery_client(monkeypatch)
-    import contextlib
-    import io
-    @contextlib.contextmanager
-    def _mock_open(*args, **kwargs):
-        yield io.BytesIO(b"TransactionID,TransactionDT,TransactionAmt,isFraud,DeviceInfo,id_01\n1,100,10.0,0,Windows,0.5\n")
-    monkeypatch.setattr(ingestion_module, "_open_source", _mock_open)
     context = build_asset_context()
 
     result = [r for r in raw_transactions_bigquery(
         context,
-        raw_csv_source=RawCsvSourceResource(),  # default: committed sample
+        raw_csv_source=RawCsvSourceResource(uri=str(source)),
         bigquery_resource=BigQueryResource(project="test-project"),
     )][-1]
 
