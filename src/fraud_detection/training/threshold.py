@@ -30,6 +30,11 @@ DEFAULT_FALSE_POSITIVE_BUDGET = _t_config["default_false_positive_budget"]
 # instead of buried in a comparison.
 DEFAULT_FALSE_POSITIVE_COST = _t_config["default_false_positive_cost"]
 
+# How many quantiles of the score distribution the cost search evaluates. Shared
+# with `plots.cost_curve_figure`, so the curve anyone reads is the same grid the
+# optimum was chosen from rather than a second, prettier sampling of it.
+COST_CANDIDATE_COUNT = 200
+
 
 @dataclass(frozen=True)
 class ThresholdChoice:
@@ -126,7 +131,7 @@ def cost_minimising_threshold(
     amounts: np.ndarray,
     *,
     false_positive_cost: float = DEFAULT_FALSE_POSITIVE_COST,
-    n_candidates: int = 200,
+    n_candidates: int = COST_CANDIDATE_COUNT,
 ) -> ThresholdChoice:
     """The threshold the cost model alone would pick.
 

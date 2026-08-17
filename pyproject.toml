@@ -30,6 +30,9 @@ dependencies = [
     "tabulate>=0.10.0",
     "polars>=1.43.2",
     "plotly>=6.9.0",
+    # Plotly's static export backend. Required at training time, not only in a
+    # notebook: the figures are written as PNG into the run's artifact directory.
+    "kaleido>=1.1.0",
 ]
 
 [dependency-groups]
