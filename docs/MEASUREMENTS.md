@@ -65,6 +65,18 @@ feature sets, ensembling, seed averaging, competition tuning) and remains unattr
 The transductive variant is built by an offline script into its own table and is never read by
 the production path.
 
+## What calibration costs, on a run where isotonic won
+
+Calibration is chosen per run between Platt and isotonic on cross-validated log loss (see
+[model-card.md](model-card.md) §3). On a run where isotonic won by 0.0007 log loss, it
+collapsed 59,054 test scores into 93 distinct values — a step function's tie problem — costing
+0.0211 PR-AUC against the uncalibrated ranking. That is why the submission carries the raw
+score while only decisions and `prediction_logs` read the calibrated one
+([architecture.md §5](architecture.md)).
+
+The pinned model below selected Platt instead, so this cost is not currently being paid; it
+recurs whenever a future run selects isotonic.
+
 ## Dataset and splits
 
 | | |
@@ -144,6 +156,11 @@ Five checks, each failing the Dagster run. Results for `lightgbm/2af70926`:
 
 The baseline is pinned in `config/orchestration.toml`. The BQML model that produced it is one
 `CREATE MODEL` statement over a fixed split and returns the same number every run.
+
+Two of these five checks could not fail in an earlier version: one compared a metric against
+a floor of `0.0`, and the other read a metric key training never wrote, so
+`dict.get(key, 0.0)` turned the missing value into a pass. Both were rewritten; the table
+above is the gate as it runs now.
 
 ## The feature contract
 

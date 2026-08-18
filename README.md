@@ -5,6 +5,19 @@ running on Google Cloud. BigQuery holds the data and computes the features, Dags
 orchestrates, LightGBM is the model, Vertex AI holds experiments and the registry, and a
 Cloud Run Job does the scoring. Infrastructure is OpenTofu, CI is GitHub Actions.
 
+```mermaid
+%%{init: {'theme':'default', 'themeVariables': {'fontSize':'18px'}}}%%
+flowchart LR
+    A[Raw CSV] --> B[Feature engineering in BigQuery]
+    B --> C[Feature audits and contract]
+    C --> D[Training and experiment tracking]
+    D --> E[Promotion gate and registry]
+    E --> F[Batch scoring job]
+    F --> G[Prediction logs]
+```
+
+Boundaries, what each box does not do, and why: [docs/architecture.md](docs/architecture.md).
+
 | If you came here for | Start at |
 | --- | --- |
 | The data and the modelling | [`eda/`](eda/README.md), 51 notebooks with one question each, then [the six audits](src/fraud_detection/evaluation/README.md) |
@@ -13,46 +26,20 @@ Cloud Run Job does the scoring. Infrastructure is OpenTofu, CI is GitHub Actions
 | Whether the results hold up | [MEASUREMENTS.md](docs/MEASUREMENTS.md) for the numbers, [DECISIONS.md](DECISIONS.md) for what was reversed |
 | Risk and model governance | [model-card.md](docs/model-card.md), [point-in-time.md](docs/point-in-time.md), [adversarial-drift.md](docs/adversarial-drift.md) |
 
-## Resolution first
-
-The run-to-run spread was measured before any result was reported: five refits of one
-configuration with nothing changed but the LightGBM seed
-([`uv run noise-band`](src/fraud_detection/cli/noise_band.py)).
-
-| | sd | difference between two single fits |
-| --- | ---: | ---: |
-| ROC-AUC | 0.0029 | 0.0041 |
-| PR-AUC | 0.0065 | 0.0092 |
-
-Differences below that are recorded as unmeasured rather than as small effects. Several
-changes that looked like improvements fell inside the band, including three feature sets of
-184, 225 and 224 columns produced by three different admission policies. Their local scores
-spanned 0.0017 ROC-AUC, and the lowest of the three scored highest on the public leaderboard.
-
-The dominant source of that spread is early stopping rather than the model: `best_iteration`
-ranged over 431–1581 across the five seeds.
-
 ## What the pipeline enforces
 
-**A feature contract.** Six audits are implemented; four of them write verdicts into
-[`references/feature-contract.json`](references/feature-contract.json), which currently admits
-205 of 502 declared columns. The file records each rejection with the check that made
-it and the number behind it, and carries a fingerprint over the admitted set. Training stamps
-that fingerprint onto the model; the scoring job compares the stamp against the file on disk
-and fails on a mismatch.
+**A feature contract.** Four of six audits write verdicts into
+[`references/feature-contract.json`](references/feature-contract.json), each rejection
+recorded with the check that made it. Training stamps the contract's fingerprint onto the
+model; scoring compares it against the file on disk and refuses to run on a mismatch.
 
 **Point-in-time feature computation.** Every velocity aggregate uses a `RANGE … 1 PRECEDING`
-window frame, which excludes the current row and any row sharing its timestamp. `LAG`, `LEAD`
-and `ROWS` frames are banned, tests assert they do not appear in the generated SQL, and the
-materialized table is checked for pairs of counts that have to agree if the frames mean what
-they claim. Details in [docs/point-in-time.md](docs/point-in-time.md).
+window frame; `LAG`, `LEAD` and `ROWS` frames are banned, and tests assert they never appear in
+the generated SQL. Details, and the leak this caught: [docs/point-in-time.md](docs/point-in-time.md).
 
 **A promotion gate.** Five checks run inside `validation_gate` and raise `Failure`, so a
-regressed candidate fails the Dagster run instead of being annotated: PR-AUC against the BQML
-baseline, no regression on unseen clients, calibration error, false-positive rate carried out
-of sample, and lift on the largest `ProductCD` segment. The last one exists because the model
-is uneven and a pooled metric hides it: segment `W` is 77% of scored rows at roughly a
-quarter of segment `R`'s PR-AUC.
+regressed candidate fails the Dagster run instead of being annotated — including a check on the
+model's largest, weakest segment, because a pooled metric alone hides exactly that.
 
 ```mermaid
 flowchart LR
@@ -66,28 +53,9 @@ flowchart LR
     F -->|yes| O[submission + prediction logs]
 ```
 
-## Results
-
-Each of these is seed-averaged and reported against the band above.
-
-| Question | Answer |
-| --- | --- |
-| What does point-in-time correctness cost? | 0.0169 ROC-AUC. One window frame swapped from `1 PRECEDING` to `UNBOUNDED FOLLOWING`, everything else held. That is about a third of the distance to the winning solutions' 0.945, not most of it. |
-| Does the contract select on signal? | Yes. At equal size, the admitted set beats a random draw by 0.0063 and a draw from the rejected columns by 0.0280. |
-| Was the policy override on nineteen columns worth keeping? | No. −0.0002 ROC-AUC, a tenth of the resolution. It has been retired. |
-
-## What the measurements changed
-
-| Finding | Consequence |
-| --- | --- |
-| The noise floor is `sd 0.0065` PR-AUC, not the `~0.003` previously assumed | Three earlier conclusions were retracted |
-| Two gate checks could not fail: one compared against a floor of `0.0`, the other read a metric key training never wrote, where `dict.get(key, 0.0)` turned a missing value into a pass | Both rewritten; the gate is now the five checks above |
-| `seconds_since_prev_txn_card` used `LAG`, so 166 rows saw a transaction at their own timestamp | Positional functions banned; the check moved from the generated SQL to the materialized table |
-| A sixth audit rejected 26 columns that score well pooled and near-chance inside the dominant segment; applying its verdicts cost 0.0325 PR-AUC and moved that segment by 0.0005 | The audit reports rather than rejects |
-| Isotonic calibration beat Platt by 0.0007 log loss while collapsing 59,054 scores into 93 distinct values, costing 0.0211 PR-AUC | Submissions carry raw scores, decisions carry calibrated ones |
-
-Full workings, including the ones later reversed, are in
-[docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) and [DECISIONS.md](DECISIONS.md).
+The numbers behind every claim above, and how far each can be trusted, are in
+[docs/MEASUREMENTS.md](docs/MEASUREMENTS.md); what changed once they were measured is in
+[DECISIONS.md](DECISIONS.md).
 
 ## Stack
 
