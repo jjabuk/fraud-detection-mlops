@@ -78,7 +78,8 @@ change if the pipeline ever ingested a daily feed: partition `raw` on ingestion 
 | Model Monitoring | It watches an endpoint's traffic, and there is no endpoint. `inference.prediction_logs` already records what a monitor would read; what is missing is the schedule, and [adversarial-drift.md](adversarial-drift.md) argues that a PSI cron would be the wrong monitor anyway. |
 | Endpoints and online prediction | Out of scope for the reason in [architecture.md](architecture.md): the hard part is the point lookup against entity state, not the HTTP surface. |
 | Vertex Training | The fit runs in the Dagster process. Moving it to a training job buys managed compute for a model that trains on one machine, and costs a container round-trip per experiment. |
-| AutoML, BQML as the production model | BQML is here as the baseline the gate compares against, which is the job it is good at. |
+| AutoML Tabular | It replaces the fit, which is not where the risk in this problem sits. The velocity features have to be computed under a `RANGE … 1 PRECEDING` frame before any trainer sees them, so the leakage-critical work happens upstream of AutoML either way, and what remains is a model that cannot be seeded, refitted five times for a noise band, or stamped with a contract fingerprint. The measurements in [MEASUREMENTS.md](MEASUREMENTS.md) took roughly forty refits; on node-hours that is a different kind of decision. |
+| BQML as the production model | It is here as the baseline the gate compares against, which is the job it is good at. |
 
 The registry entry is deliberately non-trivial. `Model.upload` requires a serving container and
 LightGBM has no prebuilt one, so registering against the prebuilt sklearn image would create an
