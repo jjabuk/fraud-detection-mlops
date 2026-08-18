@@ -99,7 +99,7 @@ Full workings, including the ones later reversed, are in
 | Tracking and registry | Vertex AI Experiments and Model Registry |
 | Scoring | Cloud Run Job |
 | IaC | OpenTofu |
-| CI/CD | GitHub Actions: lint, tests, image build and scan, SBOM, provenance attestation |
+| CI/CD | GitHub Actions: lint, tests, `tofu validate`, Dagster definition checks, image build and vulnerability scan on every PR; the dispatched push workflow attaches an SBOM and SLSA provenance |
 
 Data processing stays portable, since Dagster and SQL run anywhere. The model lifecycle is
 handed to managed services, because self-hosting a registry and its backups would not change

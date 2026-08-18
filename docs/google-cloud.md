@@ -94,7 +94,8 @@ two entrypoints, and the Cloud Run Job overrides the command.
 - **No VPC Service Controls, no CMEK.** Both are the right answer for real payment data and
   neither is exercised on a public competition dataset; claiming them without running them
   would be worse than the gap.
-- **Nothing rolls the Cloud Run Job forward automatically.** CI builds and pushes on merge;
+- **Nothing rolls the Cloud Run Job forward automatically.** The push workflow is dispatched
+  by hand and needs the WIF secrets configured;
   moving the job onto the new tag stays a `tofu apply` with the SHA.
 - **One project, one region.** Serving is stateless and scales to zero, so a regional
   deployment matches the failure model this system actually has.

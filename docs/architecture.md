@@ -34,7 +34,7 @@ graph LR
 | Multi-region / HA | Serving is stateless and scales to zero. Regional deployment matches the failure model this system actually has. |
 | Online serving with feature retrieval | Scoring is batch (§4). The image does answer `/predict` and `/health`, but only to satisfy the registry's container contract. The unbuilt part is the point lookup against entity state, and that is the hard part. |
 | Scheduled drift monitoring | The drift logic exists in `distribution_shift` and `inference.prediction_logs` records what a scheduled job would read, but no asset or schedule runs it. What the gap costs once an adversary is assumed: [adversarial-drift.md](adversarial-drift.md). |
-| Automated deploy on promotion | CI builds and pushes the image on merge. Rolling the Cloud Run Job onto a new tag stays a `tofu apply` with the SHA, because automating the last hop for a single-operator project removes a decision without removing work. |
+| Automated deploy on promotion | The image build is real and runs on every pull request; pushing it is a dispatched workflow. Rolling the Cloud Run Job onto a new tag stays a `tofu apply` with the SHA, because automating the last hop for a single-operator project removes a decision without removing work. |
 | Hosted Dagster | Running it locally proves the orchestration logic; hosting it is a cloud bill. The consequence is stated in §6. |
 | A rules layer in front of the model | Every production fraud stack runs one, because rules react on the transaction clock rather than the label clock. This system has none, and [adversarial-drift.md](adversarial-drift.md) §4 explains why that is a domain gap rather than a stylistic one. |
 
@@ -147,8 +147,10 @@ Scoring is a job rather than a service: a container that runs to completion and 
   `tofu validate`, `dagster definitions validate` for all three code locations, and an image
   build. Built, not pushed: pushing from a PR would put unreviewed code in the registry the
   job pulls from.
-- **On merge to `main`:** build and push tagged with the git SHA, authenticated by Workload
-  Identity Federation, so no service-account key exists to leak.
+- **On demand (`workflow_dispatch`):** build and push tagged with the git SHA,
+  authenticated by Workload Identity Federation, so no service-account key exists to leak.
+  The push-on-merge trigger is present but commented out, and the workflow needs the WIF
+  secrets configured on the repository before it can run at all.
 - **CI for the model:** the validation gate runs inside the training pipeline and fails the
   run.
 
