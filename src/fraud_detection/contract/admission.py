@@ -37,7 +37,7 @@ __all__ = [
     "load_admission_rules",
 ]
 
-from fraud_detection.core.config import resolve_repo_path
+from fraud_detection.config import resolve_repo_path
 
 ADMISSION_FILE = Path("config/feature-admission.toml")
 """Relative on purpose — resolved through `resolve_repo_path` at read time, so the

@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-import polars as pl
+import json
+
 import pytest
 
-from fraud_detection.core.feature_contract import (
+from fraud_detection.contract import (
     ContractError,
     FeatureContract,
     Fragment,
     Rejection,
     Source,
     assert_model_features_admitted,
-    from_distribution_shift,
-    from_time_consistency,
+    fragment_from_dict,
+    read_fragments,
 )
 
 DECLARED = {
@@ -158,90 +159,102 @@ def test_hand_editing_the_file_is_caught():
         FeatureContract.from_dict(payload)
 
 
-# ---- adapters -----------------------------------------------------------------
+# ---- fragments, as the audits write them ---------------------------------------
+
+# The audits live in analysis/ and are R. What crosses the boundary is a JSON
+# fragment per check, so these are tests of a file format rather than of a
+# statistic -- the statistics have their own tests, in testthat, next to them.
 
 
-def scan_report(rows) -> pl.DataFrame:
-    return pl.DataFrame(rows, schema=["feature", "verdict", "delta"], orient="row")
+def _fragment_file(tmp_path, check, rejections, tool="fraudaudit::test"):
+    payload = {
+        "check": check,
+        "tool": tool,
+        "params": {"threshold": 0.25},
+        "qualification": {"columns_scanned": 3},
+        "rejections": rejections,
+    }
+    (tmp_path / f"{check}.json").write_text(json.dumps(payload))
+    return payload
 
 
-def test_time_consistency_adapter_takes_only_the_inversions():
-    frag = from_time_consistency(
-        scan_report([("V335", "inverted", -0.104), ("V322", "pass", -0.077), ("V323", "weak", -0.001)])
+def test_a_fragment_round_trips_from_the_shape_r_writes():
+    frag = fragment_from_dict(
+        {
+            "check": "time_consistency",
+            "tool": "fraudaudit::time_consistency_scan",
+            "params": {"margin": 0.02},
+            "qualification": {"features_scanned": 377},
+            "rejections": [{"column": "V1", "check": "time_consistency", "value": -0.11,
+                            "unit": "column"}],
+        }
     )
-    assert [r.column for r in frag.rejections] == ["V335"]
-    assert frag.rejections[0].unit == "column"
+    assert frag.check == "time_consistency"
+    assert frag.rejections[0].column == "V1"
+    assert frag.rejections[0].value == pytest.approx(-0.11)
+    assert frag.params["margin"] == 0.02
 
 
-def test_a_block_falls_whole_when_any_member_inverts():
-    """V322 passes on its own. It is still out: its family degrades together, and a
-    per-column threshold splits that family at an arbitrary point."""
-    frag = from_time_consistency(
-        scan_report([("V335", "inverted", -0.104), ("V322", "pass", -0.077), ("V323", "pass", -0.075)]),
-        blocks={"V322-V339": ["V322", "V323", "V335"]},
+def test_a_block_rejection_keeps_the_unit_that_says_so():
+    # A column can pass on its own and still be rejected as part of a block. The
+    # unit is what stops that being reversed later by someone reading the
+    # per-column number in isolation.
+    frag = fragment_from_dict(
+        {
+            "check": "time_consistency",
+            "tool": "fraudaudit::time_consistency_scan",
+            "rejections": [{"column": "V13", "value": -0.07, "unit": "block:V12-V34"}],
+        }
     )
-
-    assert {r.column for r in frag.rejections} == {"V322", "V323", "V335"}
-    assert all(r.unit == "block:V322-V339" for r in frag.rejections)
-    assert all(r.value == -0.104 for r in frag.rejections)  # the block's worst
+    assert frag.rejections[0].unit == "block:V12-V34"
 
 
-def test_a_block_with_no_inversions_is_left_alone():
-    frag = from_time_consistency(
-        scan_report([("V322", "pass", -0.01)]), blocks={"V322-V339": ["V322", "V323"]}
+def test_a_missing_number_is_none_however_r_spelled_it():
+    # jsonlite's default renders a missing number as the string "NA", which is
+    # valid JSON and a type error here. Accepted rather than crashing at stamping
+    # time, long after the run that produced it.
+    frag = fragment_from_dict(
+        {
+            "check": "redundancy",
+            "tool": "fraudaudit::redundancy_scan",
+            "rejections": [
+                {"column": "V1", "value": None, "unit": "column"},
+                {"column": "V2", "value": "NA", "unit": "column"},
+            ],
+        }
     )
-    assert frag.rejections == ()
+    assert all(r.value is None for r in frag.rejections)
 
 
-def test_distribution_shift_adapter_uses_the_psi_threshold():
-    psi = pl.DataFrame({"column": ["V335", "V322", "V323"], "psi": [0.40, 0.12, float("nan")]})
-    frag = from_distribution_shift(psi, psi_threshold=0.25, reject_degenerate=True)
-
-    assert {r.column for r in frag.rejections} == {"V335", "V323"}
-    assert frag.params["psi_threshold"] == 0.25
-
-
-def test_an_unmeasurable_column_is_rejected_with_no_value():
-    psi = pl.DataFrame({"column": ["V323"], "psi": [float("nan")]})
-    frag = from_distribution_shift(psi, reject_degenerate=True)
-
-    assert frag.rejections[0].by == "distribution_shift_degenerate"
-    assert frag.rejections[0].value is None
+def test_a_fragment_that_does_not_name_its_tool_is_refused():
+    # A verdict whose origin is not recorded cannot be reproduced, and the
+    # contract would be asserting something nobody can check.
+    with pytest.raises(ContractError, match="tool"):
+        fragment_from_dict({"check": "time_consistency", "rejections": []})
 
 
-def test_a_constant_column_is_not_drift_and_is_left_alone_by_default():
-    # PSI is undefined for a column that never varies in the reference window, which is a
-    # different finding from "this column moved". On this dataset it covers 158 of 444
-    # columns -- a third of the table rejected by a drift check for a reason that is not
-    # drift. Off unless the policy asks for it.
-    psi = pl.DataFrame({"column": ["V323"], "psi": [float("nan")]})
-
-    assert from_distribution_shift(psi).rejections == ()
+def test_reading_fragments_applies_the_precedence_given(tmp_path):
+    _fragment_file(tmp_path, "time_consistency", [{"column": "a", "value": -0.1}])
+    _fragment_file(tmp_path, "redundancy", [{"column": "a", "value": 0.95}])
+    order = ("redundancy", "time_consistency")
+    assert [f.check for f in read_fragments(tmp_path, order)] == list(order)
 
 
-def test_a_naive_threshold_filter_would_reject_every_degenerate_column():
-    """Why the adapter exists, rather than `filter(psi > threshold)` at each call site.
-
-    Polars orders NaN **above** every number, so the obvious filter treats "PSI is
-    undefined here" as "this column moved more than anything else". Written out because it
-    already happened: an audit qualification that filtered by hand reported 210 rejections
-    where the contract had 45, and the 165 extra were exactly the degenerate columns —
-    the outcome `reject_degenerate = false` is there to prevent.
-    """
-    psi = pl.DataFrame({"column": ["shifted", "stable", "degenerate"], "psi": [0.9, 0.1, float("nan")]})
-
-    naive = psi.filter(pl.col("psi") > 0.5)["column"].to_list()
-    assert naive == ["shifted", "degenerate"], "polars NaN ordering changed; the guard below is why"
-
-    admitted_out = [r.column for r in from_distribution_shift(psi, psi_threshold=0.5).rejections]
-    assert admitted_out == ["shifted"]
+def test_a_missing_fragment_is_an_error_not_an_omission(tmp_path):
+    # A contract assembled from three of four audits is not a weaker contract, it
+    # is a different one, and it would carry no sign of which check never ran.
+    _fragment_file(tmp_path, "time_consistency", [])
+    with pytest.raises(ContractError, match="redundancy"):
+        read_fragments(tmp_path, ("time_consistency", "redundancy"))
 
 
 def test_fragments_carry_their_qualification_into_the_contract():
-    c = contract(
-        Fragment("time_consistency", (), qualification={"verdict_stability_0.25": 0.87}),
+    frag = fragment_from_dict(
+        {"check": "time_consistency", "tool": "fraudaudit::x", "rejections": [],
+         "qualification": {"reproduced_share": 0.35}}
     )
-    assert c.to_dict()["fragments"][0]["qualification"]["verdict_stability_0.25"] == 0.87
+    contract = FeatureContract.build(DECLARED, [frag])
+    assert contract.fragments[0].qualification["reproduced_share"] == 0.35
 
 
 # ---- the gate -----------------------------------------------------------------
@@ -287,7 +300,7 @@ def test_pandas_string_columns_are_declared_str_not_float():
     # `float` fallback therefore typed ProductCD and DeviceInfo as numbers, and
     # request_model() would have emitted a schema rejecting the text a caller actually
     # sends.
-    from fraud_detection.core.feature_contract.declaration import declare_columns
+    from fraud_detection.contract.declaration import declare_columns
 
     declared = declare_columns(
         {
@@ -308,7 +321,7 @@ def test_pandas_string_columns_are_declared_str_not_float():
 
 
 def test_bigquery_type_names_still_map():
-    from fraud_detection.core.feature_contract.declaration import declare_columns
+    from fraud_detection.contract.declaration import declare_columns
 
     declared = declare_columns(
         {"ProductCD": "STRING", "TransactionAmt": "FLOAT64", "n": "INTEGER"},
@@ -321,7 +334,7 @@ def test_bigquery_type_names_still_map():
 def test_engineered_columns_are_retrieved_not_requested():
     # A request schema that asked the caller for card_txn_count_24h would move the hard
     # half of the problem outside the system boundary.
-    from fraud_detection.core.feature_contract.declaration import declare_columns
+    from fraud_detection.contract.declaration import declare_columns
 
     declared = declare_columns({"card_txn_count_24h": "float64", "TransactionAmt": "float64"})
 
@@ -340,70 +353,10 @@ def test_request_model_types_follow_the_declaration():
     assert "card_txn_count_1h" not in fields
 
 
-# ---- the sixth audit's fragment, 2026-08-16 ---------------------------------------
-
-import polars as _pl
-
-from fraud_detection.core.feature_contract import from_segment_qualification
-
-
-def _scored(rows):
-    return _pl.DataFrame(
-        [{"column": c, "segment": s, "auc": a} for c, s, a in rows],
-        schema={"column": _pl.String, "segment": _pl.String, "auc": _pl.Float64},
-    )
-
-
-def test_a_column_that_collapses_inside_the_segment_is_rejected():
-    """card3 scored 0.656 pooled and 0.501 within W — a coin flip on 77% of traffic."""
-    fragment = from_segment_qualification(
-        _scored([("card3", "__pooled__", 0.656), ("card3", "W", 0.501)]),
-        segment="W",
-    )
-
-    assert [r.column for r in fragment.rejections] == ["card3"]
-    assert fragment.rejections[0].by == "segment_qualification"
-    assert fragment.rejections[0].unit == "segment:W"
-
-
-def test_a_weak_column_that_stays_weak_is_not_this_audits_business():
-    """Below the pooled floor the column was never admitted on a pooled score, so a drop
-    says nothing about how it got in."""
-    fragment = from_segment_qualification(
-        _scored([("noise", "__pooled__", 0.52), ("noise", "W", 0.50)]),
-        segment="W",
-    )
-
-    assert fragment.rejections == ()
-
-
-def test_a_strong_column_that_merely_dips_survives():
-    """W has a seven-times lower base rate, so some decay is the problem being harder."""
-    fragment = from_segment_qualification(
-        _scored([("D5", "__pooled__", 0.746), ("D5", "W", 0.709)]),
-        segment="W",
-    )
-
-    assert fragment.rejections == ()
-
-
-def test_unmeasurable_is_counted_and_not_rejected_by_default():
-    """`cannot be scored` is a different finding from `scored badly`, and collapsing them
-    is the mistake `reject_degenerate = false` exists to avoid on the drift side."""
-    scored = _scored([("product_proxy", "__pooled__", 0.66), ("product_proxy", "W", None)])
-
-    lenient = from_segment_qualification(scored, segment="W")
-    strict = from_segment_qualification(scored, segment="W", reject_unmeasurable=True)
-
-    assert lenient.rejections == ()
-    assert lenient.qualification["unmeasurable_in_segment"] == 1
-    assert [r.column for r in strict.rejections] == ["product_proxy"]
-
-
 def test_the_policy_section_moves_the_fingerprint():
     """Turning the sixth audit on changes which columns reach the model, so a fingerprint
     that did not move would describe a model trained under different rules."""
-    from fraud_detection.core.feature_contract.admission import FeatureAdmissionRules
+    from fraud_detection.contract.admission import FeatureAdmissionRules
 
     off = FeatureAdmissionRules(segment_qualification={"enabled": False})
     on = FeatureAdmissionRules(segment_qualification={"enabled": True, "segment_column": "ProductCD"})

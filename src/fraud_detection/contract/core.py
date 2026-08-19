@@ -20,6 +20,7 @@ import json
 from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 
 __all__ = [
     "Column",
@@ -29,9 +30,9 @@ __all__ = [
     "Rejection",
     "Source",
     "assert_model_features_admitted",
+    "fragment_from_dict",
     "from_admission_rules",
-    "from_distribution_shift",
-    "from_time_consistency",
+    "read_fragments",
 ]
 
 
@@ -313,172 +314,86 @@ class FeatureContract:
 # ---- adapters: audit output -> fragment ---------------------------------------
 
 
-def from_time_consistency(
-    report,
-    *,
-    blocks: dict[str, Sequence[str]] | None = None,
-    params: dict | None = None,
-    qualification: dict | None = None,
-) -> Fragment:
-    """Turn a ``time_consistency.scan`` report into a fragment.
+def fragment_from_dict(d: dict) -> Fragment:
+    """Read one audit's fragment as the R package writes it.
 
-    ``blocks`` maps a block name to its columns. When given, a block is rejected whole as
-    soon as any member inverts — the reading the data forces: members of one missingness
-    family degrade together, and a per-column threshold splits the family arbitrarily.
+    The audits themselves live in ``analysis/`` and are stated as statistics rather
+    than as models; what crosses into Python is their verdict plus the evidence
+    behind it. This is the whole of that boundary.
+
+    Deliberately generic. A builder per check would mean this file has to know the
+    shape of every audit's report, so adding an audit means editing it and a check
+    implemented outside Python could not produce a fragment at all. A fragment is
+    already a complete, self-describing record; nothing on this side needs to know
+    which statistic produced it.
+
+    The one thing this does enforce is that a fragment names its tool. A verdict
+    whose origin is not recorded cannot be reproduced, and the contract would be
+    asserting something no one can check.
     """
-    import polars as pl
-    inverted = report.filter(pl.col("verdict") == "inverted")
-    by_column = dict(zip(inverted.get_column("feature"), inverted.get_column("delta"), strict=True))
+    check = d.get("check")
+    if not check:
+        raise ContractError("fragment has no `check`")
+    tool = d.get("tool")
+    if not tool:
+        raise ContractError(f"fragment {check!r} does not name the tool that produced it")
 
-    rejections: list[Rejection] = []
-    claimed: set[str] = set()
-
-    for block_name, members in (blocks or {}).items():
-        hits = [m for m in members if m in by_column]
-        if not hits:
-            continue
-        worst = min(by_column[m] for m in hits)
-        rejections += [
-            Rejection(m, "time_consistency", float(worst), f"block:{block_name}") for m in members
-        ]
-        claimed.update(members)
-
-    rejections += [
-        Rejection(col, "time_consistency", float(delta), "column")
-        for col, delta in by_column.items()
-        if col not in claimed
-    ]
-
+    rejections = tuple(
+        Rejection(
+            column=r["column"],
+            by=r.get("check", check),
+            value=_optional_float(r.get("value")),
+            unit=r.get("unit", "column"),
+        )
+        for r in d.get("rejections", ())
+    )
     return Fragment(
-        check="time_consistency",
-        rejections=tuple(rejections),
-        params=dict(params or {}),
-        qualification=dict(qualification or {}),
-        tool="fraud_detection.evaluation.time_consistency",
+        check=check,
+        rejections=rejections,
+        params=dict(d.get("params", {})),
+        qualification=dict(d.get("qualification", {})),
+        tool=tool,
     )
 
 
-def from_distribution_shift(
-    psi_report,
-    *,
-    psi_threshold: float = 0.25,
-    reject_degenerate: bool = False,
-    params: dict | None = None,
-    qualification: dict | None = None,
-) -> Fragment:
-    """Turn a ``Reference.psi`` report into a fragment.
+def _optional_float(value) -> float | None:
+    """A rejection's number, or nothing.
 
-    ``reject_degenerate`` covers the columns that are constant in the reference window and
-    therefore unbinnable, so PSI is undefined rather than large. That is a different
-    finding from "this column moved", and it is off by default: a column nothing varies in
-    is uninformative, which is the redundancy check's business. Folding the two together
-    would let a drift check quietly reject a third of the table for a reason that has
-    nothing to do with drift.
+    Not every check rejects on a number — a blacklist entry has no statistic behind
+    it — so the field is genuinely optional. ``"NA"`` is accepted alongside ``None``
+    because R's default JSON writer renders a missing number as that string, which
+    is valid JSON and would otherwise arrive here as a type error at stamping time,
+    long after the run that produced it.
     """
-    rejections = [
-        Rejection(row['column'], "distribution_shift", float(row['psi']), "column")
-        for row in psi_report.iter_rows(named=True)
-        if row['psi'] is not None and row['psi'] == row['psi'] and row['psi'] > psi_threshold  # NaN-safe
-    ]
-    if reject_degenerate:
-        rejections += [
-            Rejection(row['column'], "distribution_shift_degenerate", None, "column")
-            for row in psi_report.iter_rows(named=True)
-            if row['psi'] is None or row['psi'] != row['psi']
-        ]
-
-    return Fragment(
-        check="distribution_shift",
-        rejections=tuple(rejections),
-        params={"psi_threshold": psi_threshold, **(params or {})},
-        qualification=dict(qualification or {}),
-        tool="fraud_detection.evaluation.distribution_shift",
-    )
+    if value is None or value == "NA" or value == "NaN":
+        return None
+    return float(value)
 
 
-def from_segment_qualification(
-    scored,
-    *,
-    segment: str,
-    pooled_floor: float = 0.60,
-    max_drop: float = 0.08,
-    reject_unmeasurable: bool = False,
-    reject: bool = True,
-    params: dict | None = None,
-    qualification: dict | None = None,
-) -> Fragment:
-    """Turn a `segment_qualification.qualify` table into a fragment.
+def read_fragments(directory: Path, order: Sequence[str]) -> list[Fragment]:
+    """Load the fragments a scan produced, in precedence order.
 
-    **Two thresholds, because one would be wrong.** A column is flagged when it clears
-    ``pooled_floor`` — it was admitted on the strength of that number — *and* gives up more
-    than ``max_drop`` inside the segment. A weak column that stays weak is not this audit's
-    business, and a strong column that is somewhat weaker in a harder segment is not a
-    defect either.
+    Order decides which check gets *credit* for a column several of them would have
+    caught. It does not change which columns are admitted, and it does change what
+    the funnel in the report looks like — so it is passed in rather than taken from
+    whatever order the filesystem lists.
 
-    ``reject`` defaults to **false**. Acting on these verdicts was measured and cost more
-    than it recovered; the fragment reports `would_reject` instead. ``reject_unmeasurable``
-    is separate and also off: a column constant inside the segment *cannot be scored*
-    there, which is a different finding from *scored badly*.
+    A missing fragment is an error rather than an omission. A contract assembled
+    from three of four audits is not a weaker contract, it is a different one, and
+    it would carry no sign of which check never ran.
     """
-    pooled = {
-        row["column"]: row["auc"]
-        for row in scored.iter_rows(named=True)
-        if row["segment"] == "__pooled__"
-    }
-    inside = {
-        row["column"]: row
-        for row in scored.iter_rows(named=True)
-        if row["segment"] == segment
-    }
+    found: dict[str, Fragment] = {}
+    for path in sorted(Path(directory).glob("*.json")):
+        fragment = fragment_from_dict(json.loads(path.read_text()))
+        found[fragment.check] = fragment
 
-    rejections, unmeasurable = [], []
-    for column, pooled_auc in pooled.items():
-        row = inside.get(column)
-        if row is None or pooled_auc is None:
-            continue
-        if row["auc"] is None:
-            unmeasurable.append(column)
-            if reject_unmeasurable and pooled_auc > pooled_floor:
-                rejections.append(
-                    Rejection(column, "segment_qualification", None, f"segment:{segment}")
-                )
-            continue
-        drop = pooled_auc - row["auc"]
-        if pooled_auc > pooled_floor and drop > max_drop:
-            rejections.append(
-                Rejection(column, "segment_qualification", round(drop, 4), f"segment:{segment}")
-            )
-
-    if not reject:
-        # Between-segment signal is spurious for within-group inference and genuinely
-        # predictive here: `C` runs at a 0.1467 fraud rate against `W`'s 0.0198, so "this is
-        # a C transaction" is real information about risk. The finding stays in
-        # `qualification`; the rejections do not.
-        rejections = []
-
-    return Fragment(
-        check="segment_qualification",
-        rejections=tuple(rejections),
-        params={
-            "segment": segment,
-            "pooled_floor": pooled_floor,
-            "max_drop": max_drop,
-            "reject_unmeasurable": reject_unmeasurable,
-            "reject": reject,
-            **(params or {}),
-        },
-        qualification={
-            "columns_compared": len(pooled),
-            "unmeasurable_in_segment": len(unmeasurable),
-            "would_reject": len(rejections) if reject else len([
-                c for c, a in pooled.items()
-                if a is not None and (r := inside.get(c)) and r["auc"] is not None
-                and a > pooled_floor and a - r["auc"] > max_drop
-            ]),
-            **(qualification or {}),
-        },
-        tool="fraud_detection.evaluation.segment_qualification",
-    )
+    missing = [c for c in order if c not in found]
+    if missing:
+        raise ContractError(
+            f"no fragment for {', '.join(missing)} in {directory} — "
+            "run the audit notebooks or `tar_make()` in analysis/ first"
+        )
+    return [found[c] for c in order]
 
 
 def from_admission_rules(blacklist) -> Fragment:

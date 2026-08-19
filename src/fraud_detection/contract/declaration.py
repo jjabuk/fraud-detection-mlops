@@ -17,8 +17,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from fraud_detection.core.feature_contract.core import Source
-from fraud_detection.core.schema import EXCLUDED_COLUMNS, FEATURE_COLUMNS
+from fraud_detection.contract.core import Source
+from fraud_detection.schema import EXCLUDED_COLUMNS, FEATURE_COLUMNS
 
 __all__ = ["RETRIEVED_COLUMNS", "declare_columns", "python_dtype", "retrieved_columns"]
 
@@ -39,7 +39,7 @@ def retrieved_columns() -> frozenset[str]:
     `client_c1_mean_prior` in the serving schema, asking the caller to send a mean over
     their own history.
     """
-    from fraud_detection.core.schema import uid_aggregate_feature_columns
+    from fraud_detection.schema import uid_aggregate_feature_columns
 
     return RETRIEVED_COLUMNS | frozenset(uid_aggregate_feature_columns())
 

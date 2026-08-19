@@ -1,11 +1,11 @@
-from fraud_detection.core.feature_contract.admission import (
+from fraud_detection.contract.admission import (
     AdmissionError,
     Blacklisted,
     FeatureAdmissionRules,
     Override,
     load_admission_rules,
 )
-from fraud_detection.core.feature_contract.core import (
+from fraud_detection.contract.core import (
     Column,
     ContractError,
     FeatureContract,
@@ -13,13 +13,15 @@ from fraud_detection.core.feature_contract.core import (
     Rejection,
     Source,
     assert_model_features_admitted,
+    fragment_from_dict,
     from_admission_rules,
-    from_distribution_shift,
-    from_segment_qualification,
-    from_time_consistency,
+    read_fragments,
 )
+from fraud_detection.contract.paths import CONTRACT_FILE, FRAGMENT_DIR
 
 __all__ = [
+    "CONTRACT_FILE",
+    "FRAGMENT_DIR",
     "AdmissionError",
     "Blacklisted",
     "Column",
@@ -31,9 +33,8 @@ __all__ = [
     "Rejection",
     "Source",
     "assert_model_features_admitted",
+    "fragment_from_dict",
     "from_admission_rules",
-    "from_distribution_shift",
-    "from_segment_qualification",
-    "from_time_consistency",
     "load_admission_rules",
+    "read_fragments",
 ]
