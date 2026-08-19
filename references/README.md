@@ -31,7 +31,7 @@ three consumers that must not disagree:
 It is assembled by the `feature_contract` asset in
 [`assets/feature_audit.py`](../src/fraud_detection/orchestration/assets/feature_audit.py),
 which fans in from the audit reports, and defined by
-[`core/feature_contract/`](../src/fraud_detection/core/feature_contract/). The `fingerprint`
+[`core/feature_contract/`](../src/fraud_detection/contract/). The `fingerprint`
 field hashes the admitted set, so a hand-edited file fails its integrity check and a model can
 be pinned to the exact contract it was trained against.
 
