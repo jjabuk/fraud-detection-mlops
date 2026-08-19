@@ -271,16 +271,29 @@ The full sequence, when the change reaches `model_input`:
 ```bash
 git commit -am "..."                       # bumps CODE_VERSION, marks the graph stale
 
+# model_input and one layer down, which is audit_frame
 uv run dagster asset materialize \
   -m fraud_detection.orchestration.definitions.feature_platform \
-  --select "fraud_detection/model_input+"  # model_input and everything downstream
+  --select "fraud_detection/model_input+"
 
 cd analysis && Rscript -e 'targets::tar_make()' && quarto render
 cd .. && uv run stamp-contract
+
+# now the contract exists and can be checked
+uv run dagster asset materialize \
+  -m fraud_detection.orchestration.definitions.feature_platform \
+  --select "fraud_detection/feature_contract"
 ```
 
-The `+` suffix is what makes this one command rather than three: it selects the asset and
-its descendants, so `audit_frame` is re-exported in the same run.
+`+` is **one layer** downstream, not all of them — `*` is all of them. One layer is what
+this wants: it re-exports `audit_frame` in the same run, and stops before
+`feature_contract`, which has nothing to validate until the audits have run and the
+contract has been stamped. Selecting `model_input*` would materialise the contract asset
+against the fragments from the *previous* export and either pass on a stale file or fail
+for a reason that says nothing about the change being made.
+
+That is also why the contract is materialised separately at the end rather than folded in:
+it is a check, and a check belongs after the thing it checks.
 
 Then check the seam held:
 
@@ -291,7 +304,10 @@ uv run pytest && cd analysis && Rscript -e 'testthat::test_dir("tests/testthat")
 
 `--check` is what CI runs. It stamps into memory from the fragments on disk and compares
 the fingerprint with the committed file, so a contract that was never re-stamped after an
-audit fails the build instead of quietly describing an older table.
+audit fails the build instead of quietly describing an older table. The
+`feature_contract` asset is the same guarantee inside the graph: it reads the committed
+file, recomputes its fingerprint, and fails the run on a mismatch, a stale timestamp or an
+admitted set below the policy floor.
 
 Dagster never runs R and cannot know when the audits ran. What it knows is when
 `audit_frame` was produced and when `feature_contract` was last materialised, and the
