@@ -13,8 +13,10 @@
 library(targets)
 
 tar_option_set(
-  packages = c("arrow", "data.table", "dplyr", "pROC", "Hmisc", "jsonlite",
-               "energy", "twosamples", "DescTools", "naniar", "psych", "ineq"),
+  packages = c(
+    "arrow", "data.table", "dplyr", "pROC", "Hmisc", "jsonlite",
+    "energy", "twosamples", "DescTools", "naniar", "psych", "ineq"
+  ),
   format = "rds"
 )
 
@@ -30,66 +32,55 @@ MODEL_INPUT <- Sys.getenv(
 )
 
 
-
-
-
 list(
   tar_target(parquet_file, MODEL_INPUT, format = "file"),
-
   tar_target(windows, load_windows(
     parquet_file,
     train   = TC_POLICY$train_window,
     holdout = TC_POLICY$holdout_window
   )),
-
   tar_target(tc_report, time_consistency_scan(
     windows,
-    opts = list(bins = TC_POLICY$bins, margin = TC_POLICY$margin,
-                alpha = TC_POLICY$alpha, min_gini_drop = TC_POLICY$min_gini_drop),
+    opts = list(
+      bins = TC_POLICY$bins, margin = TC_POLICY$margin,
+      alpha = TC_POLICY$alpha, min_gini_drop = TC_POLICY$min_gini_drop
+    ),
     verbose = FALSE
   )),
-
   tar_target(v_blocks, load_blocks("../references/column-groups-v.json")),
-
   tar_target(tc_fragment, time_consistency_fragment(
     tc_report,
     blocks = if (isTRUE(TC_POLICY$reject_by_block)) v_blocks else NULL,
     params = TC_POLICY
   )),
-
   tar_target(tc_written, write_fragment(tc_fragment, tc_report, dir = "out")),
-
   tar_target(ds_report, distribution_shift_scan(
-    windows, B = DS_POLICY$permutations, bins = DS_POLICY$bins, verbose = FALSE
+    windows,
+    B = DS_POLICY$permutations, bins = DS_POLICY$bins, verbose = FALSE
   )),
-
   tar_target(ds_fragment, distribution_shift_fragment(
-    ds_report, psi_threshold = DS_POLICY$psi_threshold,
+    ds_report,
+    psi_threshold = DS_POLICY$psi_threshold,
     alpha = DS_POLICY$alpha, params = DS_POLICY
   )),
-
   tar_target(ds_written, write_fragment(ds_fragment, ds_report, dir = "out")),
-
   tar_target(rd_report, redundancy_scan(
-    windows, min_rho2 = RD_POLICY$min_rho2, r2 = RD_POLICY$redun_r2,
+    windows,
+    min_rho2 = RD_POLICY$min_rho2, r2 = RD_POLICY$redun_r2,
     tc_report = tc_report, n_sub = RD_POLICY$rank_subsample
   )),
-
   tar_target(block_audit, audit_pinned_blocks(attr(rd_report, "rho"), v_blocks)),
-
   tar_target(rd_fragment, redundancy_fragment(rd_report, params = RD_POLICY)),
-
   tar_target(rd_written, write_fragment(rd_fragment, rd_report, dir = "out")),
-
   tar_target(sq_report, segment_qualification_scan(
-    windows, segment_column = SQ_POLICY$segment_column,
+    windows,
+    segment_column = SQ_POLICY$segment_column,
     bins = SQ_POLICY$bins, verbose = FALSE
   )),
-
   tar_target(sq_fragment, segment_qualification_fragment(
-    sq_report, reject = SQ_POLICY$reject, params = SQ_POLICY
+    sq_report,
+    reject = SQ_POLICY$reject, params = SQ_POLICY
   )),
-
   tar_target(sq_written, write_fragment(sq_fragment, sq_report, dir = "out")),
 
   # Report-only from here down: these describe the table rather than admitting
@@ -97,7 +88,8 @@ list(
   tar_target(categorical_report, categorical_scan(windows, R = 500L, verbose = FALSE)),
   tar_target(missingness_report, missingness_scan(windows, verbose = FALSE)),
   tar_target(dimensionality_report, dimensionality_scan(windows, v_blocks,
-                                                        n_iter = 30L, verbose = FALSE)),
+    n_iter = 30L, verbose = FALSE
+  )),
 
   # Its own frame: the entity question needs the time axis and the key
   # components, and `windows` excludes the time axis because it is not a feature.
@@ -106,21 +98,24 @@ list(
     features = c("card1", "card2", "card3", "addr1", "D1", "TransactionDT"),
     train = TC_POLICY$train_window, holdout = TC_POLICY$holdout_window
   )),
-
   tar_target(entity_report, compare_entity_keys(entity_windows, list(
     "card1"                      = list(columns = "card1", anchor = NULL),
     "card1 + addr1"              = list(columns = c("card1", "addr1"), anchor = NULL),
     "card1 + addr1 + D1"         = list(columns = c("card1", "addr1"), anchor = "D1"),
     "card1 + card2 + addr1 + D1" = list(columns = c("card1", "card2", "addr1"), anchor = "D1")
   ), B = 200L)),
-
-  tar_target(report_tables, {
-    dir.create("out/tables", recursive = TRUE, showWarnings = FALSE)
-    data.table::fwrite(categorical_report, "out/tables/categorical.csv")
-    data.table::fwrite(missingness_report, "out/tables/missingness.csv")
-    data.table::fwrite(dimensionality_report, "out/tables/dimensionality.csv")
-    data.table::fwrite(entity_report, "out/tables/entity_keys.csv")
-    c("out/tables/categorical.csv", "out/tables/missingness.csv",
-      "out/tables/dimensionality.csv", "out/tables/entity_keys.csv")
-  }, format = "file")
+  tar_target(report_tables,
+    {
+      dir.create("out/tables", recursive = TRUE, showWarnings = FALSE)
+      data.table::fwrite(categorical_report, "out/tables/categorical.csv")
+      data.table::fwrite(missingness_report, "out/tables/missingness.csv")
+      data.table::fwrite(dimensionality_report, "out/tables/dimensionality.csv")
+      data.table::fwrite(entity_report, "out/tables/entity_keys.csv")
+      c(
+        "out/tables/categorical.csv", "out/tables/missingness.csv",
+        "out/tables/dimensionality.csv", "out/tables/entity_keys.csv"
+      )
+    },
+    format = "file"
+  )
 )
