@@ -14,8 +14,19 @@ Python side depends on none of it beyond one JSON file.
 
 ```bash
 brew install r quarto
-Rscript -e 'install.packages(c("targets","arrow","data.table","dplyr","pROC","Hmisc","jsonlite","energy","twosamples","DescTools","naniar","psych","ggplot2","testthat"))'
+cd analysis && Rscript -e 'renv::restore()'
 ```
+
+`renv::restore()` reads `analysis/renv.lock` — 117 packages pinned to the versions the
+audits were last run against, resolved under R 4.5.1. It installs into a project library,
+not your system one, so this cannot disturb another project and another project cannot
+disturb this one. `analysis/.Rprofile` activates that library for every R session started
+in the directory, which is why the commands below need no further setup.
+
+The lockfile is the R half's answer to `uv.lock`. It exists for the same reason: an audit
+that produces a different verdict because a package moved underneath it is an audit whose
+output means nothing, and four separate reproducibility bugs in this repository were
+already of exactly that shape.
 
 The frame the audits read is produced by the `audit_frame` asset, so the usual way to
 refresh it is a Dagster materialisation rather than a command:
@@ -32,9 +43,9 @@ the default path under `data/local/cache/`:
 
 ```bash
 cd analysis
-Rscript -e 'targets::tar_make()'                      # the audit graph
-Rscript -e 'testthat::test_dir("tests/testthat")'     # 59 blocks, no cloud, no data needed beyond the parquet
-quarto render                                          # the readable reports
+Rscript -e 'targets::tar_make()'    # the audit graph
+Rscript tests/run.R                 # the suite CI runs: synthetic, no data, no credentials
+quarto render                       # the readable reports
 ```
 
 Then stamp the contract, which is the only thing that crosses back into Python:

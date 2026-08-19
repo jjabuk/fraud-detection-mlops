@@ -132,14 +132,14 @@ that "adversarial AUC is 1 on this competition" partly comes from.
 
 | Layer | Choice |
 | --- | --- |
-| Feature audits | R: `targets` graph, Quarto reports, `testthat` |
+| Feature audits | R: `targets` graph, Quarto reports, `testthat`, `renv` lockfile |
 | Orchestration | Dagster, software-defined assets, three code locations |
 | Warehouse and transforms | BigQuery SQL |
 | Training | LightGBM, scikit-learn |
 | Tracking and registry | Vertex AI Experiments and Model Registry |
 | Scoring | Cloud Run Job |
 | IaC | OpenTofu |
-| CI/CD | GitHub Actions: lint, tests, `tofu validate`, Dagster definition checks, image build and vulnerability scan on every PR; the dispatched push workflow attaches an SBOM and SLSA provenance |
+| CI/CD | GitHub Actions, two jobs: Python (lint, tests, contract freshness, `tofu validate`, Dagster definition checks, image build and vulnerability scan) and R (`renv::restore()`, `testthat`, audit-graph validation). The dispatched push workflow attaches an SBOM and SLSA provenance |
 
 Data processing stays portable, since Dagster and SQL run anywhere. The model lifecycle is
 handed to managed services, because self-hosting a registry and its backups would not change
@@ -156,6 +156,8 @@ uv run dagster dev -w dagster/workspace.yaml -p 3000
 The audits and the contract:
 
 ```bash
+cd analysis && Rscript -e 'renv::restore()' && cd ..       # once: the pinned R library
+
 uv run export-audit-frame                                  # the frame the model sees
 cd analysis && Rscript -e 'targets::tar_make()' && quarto render
 uv run stamp-contract                                      # the only thing that crosses back

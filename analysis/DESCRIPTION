@@ -12,18 +12,26 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.4)
 Imports:
+    DescTools,
+    Hmisc,
     arrow,
     data.table,
-    pROC,
-    Hmisc,
+    dplyr,
+    energy,
+    ineq,
     jsonlite,
-    stats
+    naniar,
+    pROC,
+    psych,
+    stats,
+    twosamples,
+    utils
 Suggests:
-    targets,
-    testthat (>= 3.0.0),
+    benford.analysis,
+    circular,
     ggplot2,
-    patchwork,
-    gt,
-    scorecard,
-    quarto
+    poweRlaw,
+    strucchange,
+    targets,
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3

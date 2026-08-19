@@ -66,12 +66,23 @@ Every rejection therefore needs both:
 ## Running it
 
 ```bash
+Rscript -e 'renv::restore()'                # once: the pinned library
 Rscript -e 'targets::tar_make()'            # the audit graph
 Rscript -e 'targets::tar_visnetwork()'      # draw it
 quarto render notebooks/                    # the readable version
 quarto render build-contract.qmd            # the merge
-Rscript -e 'testthat::test_dir("tests/testthat")'
+Rscript tests/run.R                         # the suite, exactly as CI runs it
 ```
+
+`renv.lock` pins 117 packages to the versions these results were produced under, resolved
+against R 4.5.1, and `.Rprofile` activates the project library automatically. The
+interpreter version is pinned in CI too: a lockfile records packages and not the R they
+were resolved against, so leaving that floating would let a new release change a verdict
+while the lockfile still claimed reproducibility.
+
+Every test here is synthetic — no parquet, no warehouse, no credential — which is what
+lets the statistics be checked on a pull request rather than only on a machine that has
+the dataset.
 
 `targets` is to this package what Dagster is to the pipeline: a dependency graph
 with content-addressed invalidation. The two are deliberately not wired
