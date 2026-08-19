@@ -1,0 +1,1221 @@
+{
+  "check": "distribution_shift",
+  "tool": "fraudaudit::distribution_shift_scan",
+  "params": {
+    "bins": 10,
+    "permutations": 200,
+    "psi_threshold": 0.25,
+    "alpha": 0.05
+  },
+  "qualification": {
+    "columns_scanned": 502,
+    "degenerate": 3,
+    "rejected": 200,
+    "significant_only": 499,
+    "material_only": 200,
+    "median_null_q99": 0.00034072525715,
+    "max_psi": 2.7892565578
+  },
+  "rejections": [
+    {
+      "column": "D3n",
+      "check": "distribution_shift",
+      "value": 2.7892565578,
+      "unit": "column"
+    },
+    {
+      "column": "D1n",
+      "check": "distribution_shift",
+      "value": 2.6918732511,
+      "unit": "column"
+    },
+    {
+      "column": "D10n",
+      "check": "distribution_shift",
+      "value": 2.0999961018,
+      "unit": "column"
+    },
+    {
+      "column": "D5n",
+      "check": "distribution_shift",
+      "value": 2.0456987508,
+      "unit": "column"
+    },
+    {
+      "column": "D15n",
+      "check": "distribution_shift",
+      "value": 1.7767404092,
+      "unit": "column"
+    },
+    {
+      "column": "D11n",
+      "check": "distribution_shift",
+      "value": 1.6780607245,
+      "unit": "column"
+    },
+    {
+      "column": "id_31",
+      "check": "distribution_shift",
+      "value": 1.3827777493,
+      "unit": "column"
+    },
+    {
+      "column": "client_m9_mean_prior",
+      "check": "distribution_shift",
+      "value": 1.0402834677,
+      "unit": "column"
+    },
+    {
+      "column": "M9",
+      "check": "distribution_shift",
+      "value": 0.96040957942,
+      "unit": "column"
+    },
+    {
+      "column": "M8",
+      "check": "distribution_shift",
+      "value": 0.9595677282,
+      "unit": "column"
+    },
+    {
+      "column": "M7",
+      "check": "distribution_shift",
+      "value": 0.95862684728,
+      "unit": "column"
+    },
+    {
+      "column": "V152",
+      "check": "distribution_shift",
+      "value": 0.95346881478,
+      "unit": "column"
+    },
+    {
+      "column": "client_m7_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.94932822135,
+      "unit": "column"
+    },
+    {
+      "column": "client_m8_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.91494777222,
+      "unit": "column"
+    },
+    {
+      "column": "client_d3n_std_prior",
+      "check": "distribution_shift",
+      "value": 0.91162988435,
+      "unit": "column"
+    },
+    {
+      "column": "V151",
+      "check": "distribution_shift",
+      "value": 0.89895649041,
+      "unit": "column"
+    },
+    {
+      "column": "device_txn_count_24h",
+      "check": "distribution_shift",
+      "value": 0.88981020435,
+      "unit": "column"
+    },
+    {
+      "column": "V145",
+      "check": "distribution_shift",
+      "value": 0.88620898347,
+      "unit": "column"
+    },
+    {
+      "column": "V150",
+      "check": "distribution_shift",
+      "value": 0.84071711315,
+      "unit": "column"
+    },
+    {
+      "column": "V159",
+      "check": "distribution_shift",
+      "value": 0.84022325915,
+      "unit": "column"
+    },
+    {
+      "column": "V160",
+      "check": "distribution_shift",
+      "value": 0.84022325915,
+      "unit": "column"
+    },
+    {
+      "column": "D11",
+      "check": "distribution_shift",
+      "value": 0.82819812134,
+      "unit": "column"
+    },
+    {
+      "column": "client_d11n_std_prior",
+      "check": "distribution_shift",
+      "value": 0.81672623904,
+      "unit": "column"
+    },
+    {
+      "column": "V2",
+      "check": "distribution_shift",
+      "value": 0.80101626597,
+      "unit": "column"
+    },
+    {
+      "column": "V3",
+      "check": "distribution_shift",
+      "value": 0.79989342388,
+      "unit": "column"
+    },
+    {
+      "column": "V8",
+      "check": "distribution_shift",
+      "value": 0.7968495107,
+      "unit": "column"
+    },
+    {
+      "column": "V6",
+      "check": "distribution_shift",
+      "value": 0.79682188473,
+      "unit": "column"
+    },
+    {
+      "column": "V7",
+      "check": "distribution_shift",
+      "value": 0.79566652522,
+      "unit": "column"
+    },
+    {
+      "column": "V9",
+      "check": "distribution_shift",
+      "value": 0.79525268644,
+      "unit": "column"
+    },
+    {
+      "column": "V4",
+      "check": "distribution_shift",
+      "value": 0.79504300394,
+      "unit": "column"
+    },
+    {
+      "column": "null_count_V_block",
+      "check": "distribution_shift",
+      "value": 0.79428315346,
+      "unit": "column"
+    },
+    {
+      "column": "V5",
+      "check": "distribution_shift",
+      "value": 0.79153571822,
+      "unit": "column"
+    },
+    {
+      "column": "D2n",
+      "check": "distribution_shift",
+      "value": 0.79122879608,
+      "unit": "column"
+    },
+    {
+      "column": "V10",
+      "check": "distribution_shift",
+      "value": 0.78696771469,
+      "unit": "column"
+    },
+    {
+      "column": "V11",
+      "check": "distribution_shift",
+      "value": 0.78688664928,
+      "unit": "column"
+    },
+    {
+      "column": "V1",
+      "check": "distribution_shift",
+      "value": 0.78565977655,
+      "unit": "column"
+    },
+    {
+      "column": "id_31_freq",
+      "check": "distribution_shift",
+      "value": 0.78313733869,
+      "unit": "column"
+    },
+    {
+      "column": "V144",
+      "check": "distribution_shift",
+      "value": 0.78270663038,
+      "unit": "column"
+    },
+    {
+      "column": "client_d5n_std_prior",
+      "check": "distribution_shift",
+      "value": 0.73733575819,
+      "unit": "column"
+    },
+    {
+      "column": "M2",
+      "check": "distribution_shift",
+      "value": 0.69373461794,
+      "unit": "column"
+    },
+    {
+      "column": "M3",
+      "check": "distribution_shift",
+      "value": 0.69187618604,
+      "unit": "column"
+    },
+    {
+      "column": "id_13",
+      "check": "distribution_shift",
+      "value": 0.68920476093,
+      "unit": "column"
+    },
+    {
+      "column": "client_m3_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.62173890812,
+      "unit": "column"
+    },
+    {
+      "column": "seconds_since_prev_txn_client",
+      "check": "distribution_shift",
+      "value": 0.59748542753,
+      "unit": "column"
+    },
+    {
+      "column": "client_m2_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.59442754212,
+      "unit": "column"
+    },
+    {
+      "column": "client_c12_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.57562827367,
+      "unit": "column"
+    },
+    {
+      "column": "client_d10n_std_prior",
+      "check": "distribution_shift",
+      "value": 0.57522434887,
+      "unit": "column"
+    },
+    {
+      "column": "client_d15n_std_prior",
+      "check": "distribution_shift",
+      "value": 0.56970424141,
+      "unit": "column"
+    },
+    {
+      "column": "client_txn_count_prior",
+      "check": "distribution_shift",
+      "value": 0.53932013058,
+      "unit": "column"
+    },
+    {
+      "column": "client_d2n_std_prior",
+      "check": "distribution_shift",
+      "value": 0.4824916786,
+      "unit": "column"
+    },
+    {
+      "column": "client_c9_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.48071378747,
+      "unit": "column"
+    },
+    {
+      "column": "V329",
+      "check": "distribution_shift",
+      "value": 0.47679667835,
+      "unit": "column"
+    },
+    {
+      "column": "V330",
+      "check": "distribution_shift",
+      "value": 0.47249947588,
+      "unit": "column"
+    },
+    {
+      "column": "id_38",
+      "check": "distribution_shift",
+      "value": 0.47116522939,
+      "unit": "column"
+    },
+    {
+      "column": "id_30",
+      "check": "distribution_shift",
+      "value": 0.4630138207,
+      "unit": "column"
+    },
+    {
+      "column": "D15",
+      "check": "distribution_shift",
+      "value": 0.46262820151,
+      "unit": "column"
+    },
+    {
+      "column": "V166",
+      "check": "distribution_shift",
+      "value": 0.45573191021,
+      "unit": "column"
+    },
+    {
+      "column": "V75",
+      "check": "distribution_shift",
+      "value": 0.4527167307,
+      "unit": "column"
+    },
+    {
+      "column": "V76",
+      "check": "distribution_shift",
+      "value": 0.45220023418,
+      "unit": "column"
+    },
+    {
+      "column": "V85",
+      "check": "distribution_shift",
+      "value": 0.43266435174,
+      "unit": "column"
+    },
+    {
+      "column": "V12",
+      "check": "distribution_shift",
+      "value": 0.42868123937,
+      "unit": "column"
+    },
+    {
+      "column": "V13",
+      "check": "distribution_shift",
+      "value": 0.42781081627,
+      "unit": "column"
+    },
+    {
+      "column": "V93",
+      "check": "distribution_shift",
+      "value": 0.42558486935,
+      "unit": "column"
+    },
+    {
+      "column": "client_c8_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.41928540721,
+      "unit": "column"
+    },
+    {
+      "column": "V92",
+      "check": "distribution_shift",
+      "value": 0.41908083707,
+      "unit": "column"
+    },
+    {
+      "column": "V81",
+      "check": "distribution_shift",
+      "value": 0.41898380653,
+      "unit": "column"
+    },
+    {
+      "column": "client_c10_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.41605648788,
+      "unit": "column"
+    },
+    {
+      "column": "V53",
+      "check": "distribution_shift",
+      "value": 0.41432077846,
+      "unit": "column"
+    },
+    {
+      "column": "V84",
+      "check": "distribution_shift",
+      "value": 0.41333800621,
+      "unit": "column"
+    },
+    {
+      "column": "V80",
+      "check": "distribution_shift",
+      "value": 0.41287104501,
+      "unit": "column"
+    },
+    {
+      "column": "V54",
+      "check": "distribution_shift",
+      "value": 0.41201411328,
+      "unit": "column"
+    },
+    {
+      "column": "V79",
+      "check": "distribution_shift",
+      "value": 0.41081004536,
+      "unit": "column"
+    },
+    {
+      "column": "V25",
+      "check": "distribution_shift",
+      "value": 0.40985272407,
+      "unit": "column"
+    },
+    {
+      "column": "V26",
+      "check": "distribution_shift",
+      "value": 0.40913086244,
+      "unit": "column"
+    },
+    {
+      "column": "V328",
+      "check": "distribution_shift",
+      "value": 0.39856218624,
+      "unit": "column"
+    },
+    {
+      "column": "D10",
+      "check": "distribution_shift",
+      "value": 0.39811140933,
+      "unit": "column"
+    },
+    {
+      "column": "V326",
+      "check": "distribution_shift",
+      "value": 0.39782192903,
+      "unit": "column"
+    },
+    {
+      "column": "V94",
+      "check": "distribution_shift",
+      "value": 0.39634511496,
+      "unit": "column"
+    },
+    {
+      "column": "V83",
+      "check": "distribution_shift",
+      "value": 0.3954979016,
+      "unit": "column"
+    },
+    {
+      "column": "V91",
+      "check": "distribution_shift",
+      "value": 0.39310078429,
+      "unit": "column"
+    },
+    {
+      "column": "V90",
+      "check": "distribution_shift",
+      "value": 0.39298113758,
+      "unit": "column"
+    },
+    {
+      "column": "V89",
+      "check": "distribution_shift",
+      "value": 0.39224288101,
+      "unit": "column"
+    },
+    {
+      "column": "V82",
+      "check": "distribution_shift",
+      "value": 0.39144512841,
+      "unit": "column"
+    },
+    {
+      "column": "V88",
+      "check": "distribution_shift",
+      "value": 0.39111238578,
+      "unit": "column"
+    },
+    {
+      "column": "V86",
+      "check": "distribution_shift",
+      "value": 0.39072425791,
+      "unit": "column"
+    },
+    {
+      "column": "V87",
+      "check": "distribution_shift",
+      "value": 0.3906827753,
+      "unit": "column"
+    },
+    {
+      "column": "V77",
+      "check": "distribution_shift",
+      "value": 0.39063052963,
+      "unit": "column"
+    },
+    {
+      "column": "V78",
+      "check": "distribution_shift",
+      "value": 0.39063052963,
+      "unit": "column"
+    },
+    {
+      "column": "ProductCD",
+      "check": "distribution_shift",
+      "value": 0.38659681879,
+      "unit": "column"
+    },
+    {
+      "column": "V327",
+      "check": "distribution_shift",
+      "value": 0.38343375476,
+      "unit": "column"
+    },
+    {
+      "column": "client_c4_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.38342012831,
+      "unit": "column"
+    },
+    {
+      "column": "V19",
+      "check": "distribution_shift",
+      "value": 0.38126694872,
+      "unit": "column"
+    },
+    {
+      "column": "V33",
+      "check": "distribution_shift",
+      "value": 0.37884071783,
+      "unit": "column"
+    },
+    {
+      "column": "V20",
+      "check": "distribution_shift",
+      "value": 0.37657949546,
+      "unit": "column"
+    },
+    {
+      "column": "V15",
+      "check": "distribution_shift",
+      "value": 0.37639708616,
+      "unit": "column"
+    },
+    {
+      "column": "V31",
+      "check": "distribution_shift",
+      "value": 0.37574620543,
+      "unit": "column"
+    },
+    {
+      "column": "V22",
+      "check": "distribution_shift",
+      "value": 0.3738936061,
+      "unit": "column"
+    },
+    {
+      "column": "V21",
+      "check": "distribution_shift",
+      "value": 0.37281048963,
+      "unit": "column"
+    },
+    {
+      "column": "client_m6_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.37193787936,
+      "unit": "column"
+    },
+    {
+      "column": "V34",
+      "check": "distribution_shift",
+      "value": 0.37129733129,
+      "unit": "column"
+    },
+    {
+      "column": "V30",
+      "check": "distribution_shift",
+      "value": 0.3709490608,
+      "unit": "column"
+    },
+    {
+      "column": "V32",
+      "check": "distribution_shift",
+      "value": 0.37075731465,
+      "unit": "column"
+    },
+    {
+      "column": "V28",
+      "check": "distribution_shift",
+      "value": 0.37021340376,
+      "unit": "column"
+    },
+    {
+      "column": "V29",
+      "check": "distribution_shift",
+      "value": 0.37014924941,
+      "unit": "column"
+    },
+    {
+      "column": "V16",
+      "check": "distribution_shift",
+      "value": 0.36992666826,
+      "unit": "column"
+    },
+    {
+      "column": "V18",
+      "check": "distribution_shift",
+      "value": 0.3696610427,
+      "unit": "column"
+    },
+    {
+      "column": "V17",
+      "check": "distribution_shift",
+      "value": 0.36960460637,
+      "unit": "column"
+    },
+    {
+      "column": "V27",
+      "check": "distribution_shift",
+      "value": 0.36959705235,
+      "unit": "column"
+    },
+    {
+      "column": "V23",
+      "check": "distribution_shift",
+      "value": 0.36935811458,
+      "unit": "column"
+    },
+    {
+      "column": "V24",
+      "check": "distribution_shift",
+      "value": 0.36923935229,
+      "unit": "column"
+    },
+    {
+      "column": "V14",
+      "check": "distribution_shift",
+      "value": 0.36918267144,
+      "unit": "column"
+    },
+    {
+      "column": "V335",
+      "check": "distribution_shift",
+      "value": 0.36838223901,
+      "unit": "column"
+    },
+    {
+      "column": "V143",
+      "check": "distribution_shift",
+      "value": 0.36797275423,
+      "unit": "column"
+    },
+    {
+      "column": "V338",
+      "check": "distribution_shift",
+      "value": 0.36666845129,
+      "unit": "column"
+    },
+    {
+      "column": "V339",
+      "check": "distribution_shift",
+      "value": 0.36378489967,
+      "unit": "column"
+    },
+    {
+      "column": "V336",
+      "check": "distribution_shift",
+      "value": 0.36365198387,
+      "unit": "column"
+    },
+    {
+      "column": "V337",
+      "check": "distribution_shift",
+      "value": 0.36168081634,
+      "unit": "column"
+    },
+    {
+      "column": "V67",
+      "check": "distribution_shift",
+      "value": 0.36068104789,
+      "unit": "column"
+    },
+    {
+      "column": "V164",
+      "check": "distribution_shift",
+      "value": 0.36012342771,
+      "unit": "column"
+    },
+    {
+      "column": "V66",
+      "check": "distribution_shift",
+      "value": 0.35945394899,
+      "unit": "column"
+    },
+    {
+      "column": "V175",
+      "check": "distribution_shift",
+      "value": 0.3467139503,
+      "unit": "column"
+    },
+    {
+      "column": "V165",
+      "check": "distribution_shift",
+      "value": 0.34544076486,
+      "unit": "column"
+    },
+    {
+      "column": "V58",
+      "check": "distribution_shift",
+      "value": 0.34269227562,
+      "unit": "column"
+    },
+    {
+      "column": "client_c13_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.34253782834,
+      "unit": "column"
+    },
+    {
+      "column": "V64",
+      "check": "distribution_shift",
+      "value": 0.33995160955,
+      "unit": "column"
+    },
+    {
+      "column": "V323",
+      "check": "distribution_shift",
+      "value": 0.33878936957,
+      "unit": "column"
+    },
+    {
+      "column": "V72",
+      "check": "distribution_shift",
+      "value": 0.33877660377,
+      "unit": "column"
+    },
+    {
+      "column": "V57",
+      "check": "distribution_shift",
+      "value": 0.33815941959,
+      "unit": "column"
+    },
+    {
+      "column": "V62",
+      "check": "distribution_shift",
+      "value": 0.33693745679,
+      "unit": "column"
+    },
+    {
+      "column": "V332",
+      "check": "distribution_shift",
+      "value": 0.33561240491,
+      "unit": "column"
+    },
+    {
+      "column": "V71",
+      "check": "distribution_shift",
+      "value": 0.33535644075,
+      "unit": "column"
+    },
+    {
+      "column": "V61",
+      "check": "distribution_shift",
+      "value": 0.33493629228,
+      "unit": "column"
+    },
+    {
+      "column": "V60",
+      "check": "distribution_shift",
+      "value": 0.334240308,
+      "unit": "column"
+    },
+    {
+      "column": "V324",
+      "check": "distribution_shift",
+      "value": 0.33298937651,
+      "unit": "column"
+    },
+    {
+      "column": "V59",
+      "check": "distribution_shift",
+      "value": 0.33094723725,
+      "unit": "column"
+    },
+    {
+      "column": "V63",
+      "check": "distribution_shift",
+      "value": 0.33061593807,
+      "unit": "column"
+    },
+    {
+      "column": "V73",
+      "check": "distribution_shift",
+      "value": 0.33045120607,
+      "unit": "column"
+    },
+    {
+      "column": "V69",
+      "check": "distribution_shift",
+      "value": 0.32927424173,
+      "unit": "column"
+    },
+    {
+      "column": "V70",
+      "check": "distribution_shift",
+      "value": 0.32925747555,
+      "unit": "column"
+    },
+    {
+      "column": "V333",
+      "check": "distribution_shift",
+      "value": 0.32844942999,
+      "unit": "column"
+    },
+    {
+      "column": "V74",
+      "check": "distribution_shift",
+      "value": 0.32757131917,
+      "unit": "column"
+    },
+    {
+      "column": "V68",
+      "check": "distribution_shift",
+      "value": 0.32736925147,
+      "unit": "column"
+    },
+    {
+      "column": "V65",
+      "check": "distribution_shift",
+      "value": 0.32689893539,
+      "unit": "column"
+    },
+    {
+      "column": "V55",
+      "check": "distribution_shift",
+      "value": 0.32687172585,
+      "unit": "column"
+    },
+    {
+      "column": "V56",
+      "check": "distribution_shift",
+      "value": 0.32687172585,
+      "unit": "column"
+    },
+    {
+      "column": "V322",
+      "check": "distribution_shift",
+      "value": 0.32256332016,
+      "unit": "column"
+    },
+    {
+      "column": "V331",
+      "check": "distribution_shift",
+      "value": 0.32101403502,
+      "unit": "column"
+    },
+    {
+      "column": "V334",
+      "check": "distribution_shift",
+      "value": 0.32099398664,
+      "unit": "column"
+    },
+    {
+      "column": "V325",
+      "check": "distribution_shift",
+      "value": 0.30731164148,
+      "unit": "column"
+    },
+    {
+      "column": "client_c5_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.29809471131,
+      "unit": "column"
+    },
+    {
+      "column": "C9",
+      "check": "distribution_shift",
+      "value": 0.29691204021,
+      "unit": "column"
+    },
+    {
+      "column": "client_c14_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.29614029694,
+      "unit": "column"
+    },
+    {
+      "column": "V147",
+      "check": "distribution_shift",
+      "value": 0.29450722665,
+      "unit": "column"
+    },
+    {
+      "column": "V146",
+      "check": "distribution_shift",
+      "value": 0.29417323103,
+      "unit": "column"
+    },
+    {
+      "column": "V140",
+      "check": "distribution_shift",
+      "value": 0.29388102836,
+      "unit": "column"
+    },
+    {
+      "column": "V163",
+      "check": "distribution_shift",
+      "value": 0.29365016015,
+      "unit": "column"
+    },
+    {
+      "column": "V162",
+      "check": "distribution_shift",
+      "value": 0.29300158343,
+      "unit": "column"
+    },
+    {
+      "column": "V161",
+      "check": "distribution_shift",
+      "value": 0.29288355708,
+      "unit": "column"
+    },
+    {
+      "column": "V158",
+      "check": "distribution_shift",
+      "value": 0.29199661062,
+      "unit": "column"
+    },
+    {
+      "column": "V139",
+      "check": "distribution_shift",
+      "value": 0.29190026217,
+      "unit": "column"
+    },
+    {
+      "column": "V157",
+      "check": "distribution_shift",
+      "value": 0.29150472781,
+      "unit": "column"
+    },
+    {
+      "column": "V149",
+      "check": "distribution_shift",
+      "value": 0.29081058711,
+      "unit": "column"
+    },
+    {
+      "column": "V148",
+      "check": "distribution_shift",
+      "value": 0.29028618788,
+      "unit": "column"
+    },
+    {
+      "column": "client_c2_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.29013172983,
+      "unit": "column"
+    },
+    {
+      "column": "V154",
+      "check": "distribution_shift",
+      "value": 0.28984994359,
+      "unit": "column"
+    },
+    {
+      "column": "V156",
+      "check": "distribution_shift",
+      "value": 0.28976838816,
+      "unit": "column"
+    },
+    {
+      "column": "V153",
+      "check": "distribution_shift",
+      "value": 0.28971426945,
+      "unit": "column"
+    },
+    {
+      "column": "V155",
+      "check": "distribution_shift",
+      "value": 0.28935966675,
+      "unit": "column"
+    },
+    {
+      "column": "id_17",
+      "check": "distribution_shift",
+      "value": 0.28898874971,
+      "unit": "column"
+    },
+    {
+      "column": "V142",
+      "check": "distribution_shift",
+      "value": 0.28886670456,
+      "unit": "column"
+    },
+    {
+      "column": "V141",
+      "check": "distribution_shift",
+      "value": 0.28793454441,
+      "unit": "column"
+    },
+    {
+      "column": "V138",
+      "check": "distribution_shift",
+      "value": 0.28680305862,
+      "unit": "column"
+    },
+    {
+      "column": "DeviceInfo",
+      "check": "distribution_shift",
+      "value": 0.28661415259,
+      "unit": "column"
+    },
+    {
+      "column": "id_02",
+      "check": "distribution_shift",
+      "value": 0.28554438756,
+      "unit": "column"
+    },
+    {
+      "column": "V35",
+      "check": "distribution_shift",
+      "value": 0.28505892932,
+      "unit": "column"
+    },
+    {
+      "column": "V36",
+      "check": "distribution_shift",
+      "value": 0.28418679628,
+      "unit": "column"
+    },
+    {
+      "column": "client_c1_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.28241731741,
+      "unit": "column"
+    },
+    {
+      "column": "client_c7_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.27684815094,
+      "unit": "column"
+    },
+    {
+      "column": "id_14",
+      "check": "distribution_shift",
+      "value": 0.27587369764,
+      "unit": "column"
+    },
+    {
+      "column": "V183",
+      "check": "distribution_shift",
+      "value": 0.27475134582,
+      "unit": "column"
+    },
+    {
+      "column": "V208",
+      "check": "distribution_shift",
+      "value": 0.27382392783,
+      "unit": "column"
+    },
+    {
+      "column": "id_35",
+      "check": "distribution_shift",
+      "value": 0.27271672641,
+      "unit": "column"
+    },
+    {
+      "column": "id_19",
+      "check": "distribution_shift",
+      "value": 0.27162291911,
+      "unit": "column"
+    },
+    {
+      "column": "id_34",
+      "check": "distribution_shift",
+      "value": 0.27146403811,
+      "unit": "column"
+    },
+    {
+      "column": "id_01",
+      "check": "distribution_shift",
+      "value": 0.27082283739,
+      "unit": "column"
+    },
+    {
+      "column": "id_32",
+      "check": "distribution_shift",
+      "value": 0.26965645602,
+      "unit": "column"
+    },
+    {
+      "column": "client_amt_avg_prior",
+      "check": "distribution_shift",
+      "value": 0.26945819683,
+      "unit": "column"
+    },
+    {
+      "column": "client_amt_deviation_prior",
+      "check": "distribution_shift",
+      "value": 0.26573346476,
+      "unit": "column"
+    },
+    {
+      "column": "V181",
+      "check": "distribution_shift",
+      "value": 0.26405150986,
+      "unit": "column"
+    },
+    {
+      "column": "V237",
+      "check": "distribution_shift",
+      "value": 0.26216624887,
+      "unit": "column"
+    },
+    {
+      "column": "V177",
+      "check": "distribution_shift",
+      "value": 0.26178683979,
+      "unit": "column"
+    },
+    {
+      "column": "V182",
+      "check": "distribution_shift",
+      "value": 0.25762448336,
+      "unit": "column"
+    },
+    {
+      "column": "client_c11_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.25727113912,
+      "unit": "column"
+    },
+    {
+      "column": "client_c6_mean_prior",
+      "check": "distribution_shift",
+      "value": 0.25605489265,
+      "unit": "column"
+    },
+    {
+      "column": "V231",
+      "check": "distribution_shift",
+      "value": 0.2558946125,
+      "unit": "column"
+    },
+    {
+      "column": "V233",
+      "check": "distribution_shift",
+      "value": 0.25570329415,
+      "unit": "column"
+    },
+    {
+      "column": "V304",
+      "check": "distribution_shift",
+      "value": 0.25492893466,
+      "unit": "column"
+    },
+    {
+      "column": "V235",
+      "check": "distribution_shift",
+      "value": 0.25393127799,
+      "unit": "column"
+    },
+    {
+      "column": "DeviceInfo_freq",
+      "check": "distribution_shift",
+      "value": 0.25312756812,
+      "unit": "column"
+    },
+    {
+      "column": "V275",
+      "check": "distribution_shift",
+      "value": 0.25156518456,
+      "unit": "column"
+    }
+  ]
+}
