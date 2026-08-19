@@ -20,16 +20,25 @@ parquet (features.model_input)
 
 ## The audits
 
-| Notebook | Question | Method | Feeds contract |
-| --- | --- | --- | --- |
-| `does-a-feature-still-mean-the-same-later` | Has a column reversed between an early and a late window? | Weight of evidence, Somers' D, DeLong intervals and test | yes |
-| `has-the-population-moved` | Did the distribution move, and are the periods distinguishable jointly? | PSI against a measured null, Anderson–Darling, energy test | yes |
-| `which-columns-say-the-same-thing-twice` | Which columns restate their neighbours? | Variable clustering on rank correlation, redundancy analysis on splines | yes |
-| `does-a-column-work-inside-every-segment` | Does a pooled association survive conditioning on the product? | Cochran–Mantel–Haenszel, Breslow–Day | recorded, not applied |
-| `what-the-columns-are-made-of` | Does a column know more about the period than about fraud; how many dimensions does a V block have; is absence random? | Cramér's V with a bootstrap interval, Horn's parallel analysis, tetrachoric correlation, Little's MCAR | no, report-only |
-| `who-is-the-customer-when-the-data-does-not-say` | Is the reconstructed entity real, and which key? | Label purity against a permuted null, coverage, concentration | the contract's `entity` block |
-| `what-the-fraud-literature-asks…` | What is true of the phenomenon rather than of a column? | Benford, power-law tail index, Bai–Perron breaks, Rayleigh, Gini/HHI | no, report-only |
-| `what-does-this-data-look-like` | How much fraud, where, and are the columns the type they claim? | Wilson intervals on every rate, weight of evidence on the amount, cardinality against declared type | no, report-only |
+Three things a verdict can do to the contract, and the same three marks are used
+in every table on this page:
+
+| | |
+| :---: | --- |
+| ✅ | **Rejects.** A verdict here can remove a column from the feature set, or fix the entity key. |
+| 📊 | **Recorded.** Written into the contract as evidence, and never removes anything. |
+| ➖ | **Descriptive.** Never reaches the contract at all. |
+
+| Notebook | Question | Method | |
+| --- | --- | --- | :---: |
+| `does-a-feature-still-mean-the-same-later` | Has a column reversed between an early and a late window? | Weight of evidence, Somers' D, DeLong intervals and test | ✅ |
+| `has-the-population-moved` | Did the distribution move, and are the periods distinguishable jointly? | PSI against a measured null, Anderson–Darling, energy test | ✅ |
+| `which-columns-say-the-same-thing-twice` | Which columns restate their neighbours? | Variable clustering on rank correlation, redundancy analysis on splines | ✅ |
+| `who-is-the-customer-when-the-data-does-not-say` | Is the reconstructed entity real, and which key? | Label purity against a permuted null, coverage, concentration | ✅ |
+| `does-a-column-work-inside-every-segment` | Does a pooled association survive conditioning on the product? | Cochran–Mantel–Haenszel, Breslow–Day | 📊 |
+| `what-the-columns-are-made-of` | Does a column know more about the period than about fraud; how many dimensions does a V block have; is absence random? | Cramér's V with a bootstrap interval, Horn's parallel analysis, tetrachoric correlation, Little's MCAR | 📊 |
+| `what-the-fraud-literature-asks…` | What is true of the phenomenon rather than of a column? | Benford, power-law tail index, Bai–Perron breaks, Rayleigh, Gini/HHI | ➖ |
+| `what-does-this-data-look-like` | How much fraud, where, and are the columns the type they claim? | Wilson intervals on every rate, weight of evidence on the amount, cardinality against declared type | ➖ |
 
 `build-contract.qmd` merges the fragments, and asks two questions about the result
 itself: whether the admitted set carries more information value than random sets of the
@@ -38,6 +47,50 @@ same size, and how much of it survives moving the drift threshold.
 No audit trains a model. Where the literature reaches for one — a single-feature
 fit to score a column, a classifier to tell two periods apart — a ten-bin
 scorecard and a permutation two-sample test answer the same question and print.
+
+## Every statistic, and what it decides
+
+Each row is a test or an interval, not a threshold on a point estimate. The mark
+in the last column is the legend above: ✅ can reject, 📊 recorded as evidence,
+➖ descriptive only.
+
+| Question | Method | R | |
+| --- | --- | --- | :---: |
+| Does a column carry signal at all? | Somers' D, identical to AUC on the Mann–Whitney scale | `Hmisc::somers2` | ✅ |
+| Is that signal distinguishable from none? | AUC with a DeLong confidence interval | `pROC::ci.auc` | ✅ |
+| Did it change between an early and a late window? | DeLong's test for two AUCs, unpaired | `pROC::roc.test` | ✅ |
+| Did it reverse direction? | Sign flips in the weight of evidence per bin, weighted by the mass they carry | own, on a pinned binning | ✅ |
+| Did the column's distribution move? | PSI against its **measured** null, drawn from the multivariate hypergeometric | own | ✅ |
+| Is the move more than sampling noise? | Anderson–Darling and Cramér–von Mises, permutation p-values | `twosamples` | ✅ |
+| Which columns restate their neighbours? | Variable clustering on rank correlation, cut on shared variance | `stats::hclust` on Spearman ρ² | ✅ |
+| Which are *reconstructable* from the others? | Redundancy analysis on restricted cubic splines | `Hmisc::redun` | ✅ |
+| Is the reconstructed customer real? | Label purity against a permuted null that keeps the group sizes | own | ✅ |
+| How much information does it carry? | Information value over the same bins | own | 📊 |
+| Are the two periods distinguishable **jointly**? | Energy two-sample test — adversarial validation without the adversary | `energy::eqdist.etest` | 📊 |
+| How strong is a categorical dependence, and how precisely known? | Cramér's V with Bergsma's correction, bootstrapped on the contingency table | `DescTools`, own | 📊 |
+| How many dimensions does a block of V columns really have? | Horn's parallel analysis | `psych::fa.parallel` | 📊 |
+| Are the binary M columns one latent thing? | Tetrachoric correlation | `psych::tetrachoric` | 📊 |
+| Does an association survive conditioning on the product segment? | Cochran–Mantel–Haenszel | `stats::mantelhaen.test` | 📊 |
+| Is it the *same* association in every segment? | Breslow–Day test for homogeneity of odds ratios | `DescTools::BreslowDayTest` | 📊 |
+| Is a value missing at random? | Little's MCAR test, against always-observed columns | `naniar::mcar_test` | 📊 |
+| Do the amounts look naturally generated? | Benford's law, with the effect size next to the p-value | `benford.analysis` | ➖ |
+| How heavy is the tail of the losses? | Power-law tail index, Clauset–Shalizi–Newman | `poweRlaw` | ➖ |
+| When did the fraud rate actually change? | Bai–Perron structural breaks | `strucchange::breakpoints` | ➖ |
+| Is there a daily cycle? | Rayleigh's test — hour of day is circular, not linear | `circular::rayleigh.test` | ➖ |
+| How concentrated is the customer base? | Gini and Herfindahl–Hirschman on transactions per entity | `ineq` | ➖ |
+
+### The descriptive pass
+
+What is in front of the audits, rather than whether a column can be trusted.
+Nothing here touches the contract.
+
+| Question | Method | |
+| --- | --- | :---: |
+| How much fraud is there, and does the rate hold still? | Wilson intervals on the daily rate | ➖ |
+| Where does the fraud sit? | Fraud rate per product and per device-info presence, with non-overlapping Wilson intervals | ➖ |
+| Does rarity predict fraud? | Fraud rate by frequency band, against each column's own base rate | ➖ |
+| What does the amount say on its own? | Weight of evidence and information value over the amount | ➖ |
+| Are the columns the type they claim? | Stored type against effective cardinality | ➖ |
 
 ## Why not a model
 

@@ -81,7 +81,7 @@ grid <- rbindlist(lapply(seq(0.5, 0.95, by = 0.05), function(t) {
              largest = max(lengths(cl$groups)))
 }))
 
-ggplot(grid, aes(min_rho2)) +
+p <- ggplot(grid, aes(min_rho2)) +
   geom_line(aes(y = groups, colour = "groups"), linewidth = 0.8) +
   geom_point(aes(y = groups, colour = "groups")) +
   geom_line(aes(y = largest, colour = "largest group"), linewidth = 0.8) +
@@ -92,6 +92,13 @@ ggplot(grid, aes(min_rho2)) +
        colour = NULL, title = "How the partition responds to the threshold",
        subtitle = "The dashed line is the policy setting") +
   theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank())
+p
+```
+
+```{r save-plot-sensitivity}
+#| echo: false
+ggsave("../../docs/img/sensitivity.svg", plot = p,
+       width = 8, height = 5, dpi = 300, bg = "white")
 ```
 
 ## Does the inherited V-block partition hold?

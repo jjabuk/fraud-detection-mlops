@@ -15,23 +15,22 @@ Imports:
     DescTools,
     Hmisc,
     arrow,
+    benford.analysis,
+    circular,
     data.table,
     dplyr,
     energy,
+    ggplot2,
     ineq,
     jsonlite,
     naniar,
     pROC,
+    poweRlaw,
     psych,
     stats,
-    twosamples,
-    utils
-Suggests:
-    benford.analysis,
-    circular,
-    ggplot2,
-    poweRlaw,
     strucchange,
     targets,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    twosamples,
+    utils
 Config/testthat/edition: 3

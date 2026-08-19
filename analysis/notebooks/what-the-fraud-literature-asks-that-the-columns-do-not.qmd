@@ -53,7 +53,7 @@ digits <- data.table(
   observed = as.numeric(bf$bfd$data.dist),
   expected = as.numeric(bf$bfd$benford.dist)
 )
-ggplot(digits, aes(factor(digit))) +
+p <- ggplot(digits, aes(factor(digit))) +
   geom_col(aes(y = observed, fill = "observed"), width = 0.65) +
   geom_point(aes(y = expected, colour = "Benford"), size = 2.6) +
   geom_line(aes(y = expected, colour = "Benford", group = 1), linewidth = 0.6) +
@@ -63,6 +63,13 @@ ggplot(digits, aes(factor(digit))) +
        title = "Leading digit of fraudulent transaction amounts",
        subtitle = sprintf("n = %s", format(length(fraud_amounts), big.mark = ","))) +
   theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank())
+p
+```
+
+```{r save-plot-benford}
+#| echo: false
+ggsave("../../docs/img/benford-plot.svg", plot = p,
+       width = 8, height = 5, dpi = 300, bg = "white")
 ```
 
 ```{r benford-stats}
@@ -126,7 +133,7 @@ daily <- d[, .(rate = mean(isFraud), n = .N), by = .(day = floor(TransactionDT /
 bp <- breakpoints(rate ~ 1, data = daily, h = 0.1)
 break_days <- daily$day[na.omit(bp$breakpoints)]
 
-ggplot(daily, aes(day, rate)) +
+p <- ggplot(daily, aes(day, rate)) +
   geom_line(colour = "#8c8c8c", linewidth = 0.4) +
   geom_smooth(method = "loess", span = 0.2, se = FALSE, colour = "#1f4e79", linewidth = 0.8) +
   geom_vline(xintercept = break_days, colour = "#c1440e", linetype = "dashed", linewidth = 0.5) +
@@ -134,6 +141,13 @@ ggplot(daily, aes(day, rate)) +
        title = "Daily fraud rate, with Bai-Perron breakpoints",
        subtitle = sprintf("breaks at days %s", paste(break_days, collapse = ", "))) +
   theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank())
+p
+```
+
+```{r save-plot-bai-perron}
+#| echo: false
+ggsave("../../docs/img/bai-perron-breakpoints.svg", plot = p,
+       width = 8, height = 5, dpi = 300, bg = "white")
 ```
 
 Two breaks, and neither falls where the audit windows are cut. That is worth
@@ -162,7 +176,7 @@ peak <- ((as.numeric(mean(angles)) %% (2 * pi)) * 24 / (2 * pi))
 
 by_hour <- d[, .(rate = mean(isFraud), n = .N),
              by = .(hour = floor((TransactionDT / 3600) %% 24))][order(hour)]
-ggplot(by_hour, aes(hour, rate)) +
+p <- ggplot(by_hour, aes(hour, rate)) +
   geom_col(fill = "#1f4e79", width = 0.9) +
   geom_hline(yintercept = mean(d$isFraud), linetype = "dashed", colour = "#c1440e") +
   coord_polar(start = 0) +
@@ -171,7 +185,14 @@ ggplot(by_hour, aes(hour, rate)) +
        title = "Fraud rate by hour of the dataset clock",
        subtitle = sprintf("Rayleigh R = %.3f, p %s; concentration peaks at hour %.1f",
                           rt$statistic, format.pval(rt$p.value), peak)) +
-  theme_minimal(base_size = 12)
+  theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank())
+p
+```
+
+```{r save-plot-circular}
+#| echo: false
+ggsave("../../docs/img/circular-fraud-rate.svg", plot = p,
+       width = 8, height = 5, dpi = 300, bg = "white")
 ```
 
 The concentration is real and strong. What it is *not* is a statement about

@@ -1,0 +1,260 @@
+---
+title: "Why the validation gap is not a mistake"
+subtitle: "The embargo, the split, and what the daily rate says about both"
+format:
+  html:
+    toc: true
+    code-fold: true
+    df-print: paged
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| include: false
+suppressPackageStartupMessages({
+  library(arrow)
+  library(data.table)
+  library(ggplot2)
+})
+invisible(lapply(list.files("../R", full.names = TRUE, pattern = "[.]R$"), source))
+PARQUET <- Sys.getenv("FRAUDAUDIT_PARQUET", "../../data/local/cache/audit_frame.parquet")
+d <- data.table::as.data.table(
+  arrow::read_parquet(PARQUET, col_select = c("TransactionDT", "isFraud"))
+)
+```
+
+The pipeline splits the data four ways: **train**, an unassigned **gap**, **validation**,
+and **test**. The gap is the part that looks like a bug and is not.
+
+A chargeback arrives months after the transaction it belongs to. At deployment time,
+the most recent period is therefore never finished being labelled: some frauds have not
+yet been reported, so a model scored against that period is being scored against a label
+that does not yet exist. Validating flush against training measures a situation nobody
+ever has -- it reports optimism rather than performance. Leaving an unassigned strip
+between train and validation is what forces the evaluation to happen on a period the
+model never touched and that has had time to settle.
+
+Everything else in the design follows from that one constraint.
+
+## The split boundaries
+
+The boundaries are **quantiles of the time axis**, not calendar dates. The dataset runs
+a fixed number of rows; cutting at quantiles keeps the two audit windows the same size
+in rows, which keeps every statistical test on the two sides at the same power. Calendar
+cuts would not.
+
+```{r windows}
+w <- time_windows(d$TransactionDT,
+  train   = AUDIT_WINDOWS$train,
+  holdout = AUDIT_WINDOWS$holdout
+)
+
+# Full dataset split for context (train / gap / val / test)
+q <- function(p) quantile_nearest(d$TransactionDT, p)
+full_cuts <- sapply(c(0.75, 0.85, 0.90), q)
+full_cuts_days <- as.numeric(full_cuts) / 86400
+
+span <- function(idx) round(diff(range(d$TransactionDT[idx])) / 86400, 1)
+data.table(
+  segment = c(
+    "train (0 -- 0.75)", "gap, unassigned (0.75 -- 0.85)",
+    "validation (0.85 -- 0.90)", "test (0.90 -- 1.0)"
+  ),
+  rows = c(
+    sum(d$TransactionDT <= q(0.75)),
+    sum(d$TransactionDT > q(0.75) & d$TransactionDT <= q(0.85)),
+    sum(d$TransactionDT > q(0.85) & d$TransactionDT <= q(0.90)),
+    sum(d$TransactionDT > q(0.90))
+  ),
+  calendar_days = c(
+    round((q(0.75) - min(d$TransactionDT)) / 86400, 1),
+    round((q(0.85) - q(0.75)) / 86400, 1),
+    round((q(0.90) - q(0.85)) / 86400, 1),
+    round((max(d$TransactionDT) - q(0.90)) / 86400, 1)
+  )
+)
+```
+
+The audit windows used by the time-consistency and drift checks are the first 17%
+and last 17% of the time axis (quantiles 0--0.17 and 0.83--1.0), which sit entirely
+inside the training data and entirely outside it, respectively.
+
+```{r audit-windows}
+data.table(
+  window = c("audit early (0 -- 0.17)", "audit late (0.83 -- 1.0)"),
+  rows = c(length(w$train), length(w$holdout)),
+  calendar_days = c(span(w$train), span(w$holdout)),
+  note = c(
+    "first sixth of the traffic",
+    "last sixth, never seen in training"
+  )
+)
+```
+
+**Equal rows, unequal calendar.** Transaction volume falls over the period: the later
+window covers 1.56x as many days as the early one for the same number of transactions.
+That is a real confound -- part of what reads as "this feature changed" is "the later
+window watched for longer". It is left this way because the alternative (equal calendar
+spans) would give the two windows different row counts and therefore different statistical
+power, which is a worse confound for a *test* than an unequal span is for an *estimate*.
+The reproducibility check in the time-consistency notebook varies the windows and checks
+whether verdicts survive.
+
+## The daily rate
+
+Wilson rather than the normal approximation: at a 3.5% base rate the normal interval
+runs below zero on thin days, which is not a statement anyone should make about fraud.
+
+The band around the line is the measurement's own resolution, and reading it is the
+point of the figure. It widens where the day is thin, so a spike sitting inside a wide
+band is a quiet day rather than an event -- the two are indistinguishable from the line
+alone, which is why a bare daily rate is a misleading thing to plot. Behind the line the
+four segments of the split are shaded, so every claim below can be checked against the
+period it is about.
+
+```{r rate}
+#| fig-width: 8
+#| fig-height: 5
+s <- d[, .(n = .N, k = sum(isFraud == 1L)), by = .(day = as.integer(TransactionDT %/% 86400L))][order(day)]
+
+z <- stats::qnorm(0.975)
+s[, p := k / n]
+s[, centre := (p + z^2 / (2 * n)) / (1 + z^2 / n)]
+s[, half := (z / (1 + z^2 / n)) * sqrt(p * (1 - p) / n + z^2 / (4 * n^2))]
+s[, `:=`(lo = pmax(0, centre - half), hi = pmin(1, centre + half))]
+
+pooled <- sum(s$k) / sum(s$n)
+
+cuts <- full_cuts_days
+ymax <- max(s$hi)
+bands <- data.frame(
+  xmin = c(min(s$day), cuts[1], cuts[2], cuts[3]),
+  xmax = c(cuts[1], cuts[2], cuts[3], max(s$day)),
+  what = factor(c("train", "gap, unassigned", "val", "test"),
+    levels = c("train", "gap, unassigned", "val", "test")
+  )
+)
+bands$mid <- (bands$xmin + bands$xmax) / 2
+
+p <- ggplot2::ggplot() +
+  ggplot2::geom_rect(
+    data = bands,
+    ggplot2::aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = what),
+    alpha = 0.5
+  ) +
+  ggplot2::scale_fill_manual(
+    values = c(
+      "train" = "#ffffff", "gap, unassigned" = "#f6e8d8",
+      "val" = "#e8eef4", "test" = "#dbe4ed"
+    ),
+    guide = "none"
+  ) +
+  ggplot2::geom_vline(
+    xintercept = cuts, colour = "#8c8c8c",
+    linewidth = 0.35, linetype = "22"
+  ) +
+  ggplot2::geom_ribbon(
+    data = s, ggplot2::aes(x = day, ymin = lo, ymax = hi),
+    fill = "#1f4e79", alpha = 0.2
+  ) +
+  ggplot2::geom_hline(
+    yintercept = pooled, colour = "#c1440e",
+    linewidth = 0.5, linetype = "22"
+  ) +
+  ggplot2::geom_line(
+    data = s, ggplot2::aes(x = day, y = p),
+    colour = "#1f4e79", linewidth = 0.5
+  ) +
+  ggplot2::geom_text(
+    data = bands, ggplot2::aes(x = mid, y = ymax * 1.06, label = what),
+    colour = "#8c8c8c", size = 3.2, fontface = "bold", vjust = 0
+  ) +
+  ggplot2::annotate("text",
+    x = min(s$day), y = pooled,
+    label = paste0("pooled ", sprintf("%.1f%%", 100 * pooled), "  "),
+    colour = "#c1440e", size = 3.2, hjust = 0, vjust = -0.6
+  ) +
+  ggplot2::scale_y_continuous(labels = function(x) paste0(round(100 * x, 1), "%")) +
+  ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(0.005, 0.005))) +
+  ggplot2::coord_cartesian(ylim = c(min(s$lo), ymax * 1.14)) +
+  # Title and subtitle stay: the figure is embedded in the README, where it has to
+  # say what it is without the surrounding notebook. The caption does not -- it was
+  # six lines of argument rendered at 8.4pt, which is prose pretending to be a
+  # graphic. That text now sits around this chunk, at full size and searchable.
+  ggplot2::labs(
+    title = "The fraud rate does not hold still, and some days barely measure it",
+    subtitle = paste0(
+      "Daily fraud rate across ", nrow(s),
+      " days, shaded with a 95% Wilson interval. Pooled rate ",
+      sprintf("%.2f%%", 100 * pooled), "."
+    ),
+    x = "Day on the transaction time axis", y = "Fraud rate"
+  ) +
+  ggplot2::theme_minimal(base_size = 12) +
+  ggplot2::theme(panel.grid.minor = ggplot2::element_blank())
+p
+```
+
+The rate does not hold still. The first weeks sit visibly under the pooled line, which is
+what a model trained on the whole period inherits: it is fitted partly on a regime that
+the period it will be judged on has already left.
+
+The Bai-Perron structural break test (in
+[what-the-fraud-literature-asks...](what-the-fraud-literature-asks-that-the-columns-do-not.qmd))
+finds two level shifts, neither of which falls where the audit windows are cut -- so the
+windows are a convention the data does not endorse. A drift monitor pinned to those
+boundaries would report the change late.
+
+```{r save-svg}
+#| echo: false
+dir.create("../../docs/img", recursive = TRUE, showWarnings = FALSE)
+ggplot2::ggsave("../../docs/img/daily-fraud-rate.svg",
+  plot = p,
+  width = 8, height = 5, dpi = 300, bg = "white"
+)
+```
+
+## What the unassigned gap costs and what it buys
+
+```{r gap-stats}
+gap_rows <- sum(d$TransactionDT > q(0.75) & d$TransactionDT <= q(0.85))
+gap_pct <- round(100 * gap_rows / nrow(d), 1)
+gap_fraud <- d[TransactionDT > q(0.75) & TransactionDT <= q(0.85), sum(isFraud)]
+data.table(
+  quantity = c(
+    "rows in the gap", "share of dataset",
+    "fraud labels in the gap", "calendar span of the gap (days)"
+  ),
+  value = c(
+    format(gap_rows, big.mark = ","),
+    paste0(gap_pct, "%"),
+    format(gap_fraud, big.mark = ","),
+    as.character(round((q(0.85) - q(0.75)) / 86400, 1))
+  )
+)
+```
+
+The gap costs `r gap_pct`% of the labelled data, discarded rather than used for
+training or evaluation. What it buys is a validation set that is actually comparable
+to deployment: the model has not seen those rows, the labels are settled, and the
+period is separated from training by enough time that a chargeback reported after
+the split boundary is still a chargeback the validation set can see.
+
+The test set (0.90 -- 1.0) is held back further still and is only used for the final
+numbers in [MEASUREMENTS.md](../../docs/MEASUREMENTS.md).
+
+## Why a fixed calendar gap would not work
+
+A calendar embargo -- "skip the 30 days after training ends" -- looks equivalent and
+is not. The dataset's transaction volume is uneven: a calendar cut leaves unequal
+row counts in the two windows, and every test statistic downstream has different power
+on the two sides. A quantile cut fixes the row count and lets the calendar span vary;
+the commentary in the time-consistency audit is explicit about that confound and its
+mitigation.
+
+The policy setting is in `AUDIT_WINDOWS` in `R/policy.R`. A different value there
+propagates automatically to every notebook that sources it -- there is one definition,
+not two that have to be kept in sync.

@@ -106,7 +106,7 @@ thing the audit found.
 plot_data <- report[!is.na(pooled_auc)]
 plot_data[, status := fifelse(!measurable_in_dominant, "constant in dominant segment",
                        fifelse(heterogeneous %in% TRUE, "heterogeneous across segments", "consistent"))]
-ggplot(plot_data, aes(pooled_auc, fifelse(is.na(dominant_auc), 0.5, dominant_auc), colour = status)) +
+p <- ggplot(plot_data, aes(pooled_auc, fifelse(is.na(dominant_auc), 0.5, dominant_auc), colour = status)) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", linewidth = 0.3) +
   geom_point(alpha = 0.75, size = 1.8) +
   scale_colour_manual(values = c(`consistent` = "#1f4e79",
@@ -117,7 +117,15 @@ ggplot(plot_data, aes(pooled_auc, fifelse(is.na(dominant_auc), 0.5, dominant_auc
        subtitle = "Red points are constants in the segment carrying most of the traffic") +
   theme_minimal(base_size = 12) +
   theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+p
 ```
+
+```{r save-plot}
+#| echo: false
+ggsave("../../docs/img/segment-qualification.svg", plot = p,
+       width = 8, height = 5, dpi = 300, bg = "white")
+```
+
 
 ## Heterogeneity is not a reason to drop a column
 

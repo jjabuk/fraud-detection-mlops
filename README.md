@@ -7,30 +7,14 @@ computes the features, Dagster orchestrates, LightGBM is the model, Vertex AI ho
 experiments and the registry, and a Cloud Run Job does the scoring. Infrastructure is
 OpenTofu, CI is GitHub Actions.
 
-```mermaid
-%%{init: {'theme':'default', 'themeVariables': {'fontSize':'18px'}}}%%
-flowchart LR
-    A[Raw CSV] --> B[Feature engineering in BigQuery]
-    B --> C["Statistical audits in R"]
-    C --> D[Feature contract]
-    D --> E[Training and experiment tracking]
-    E --> F[Promotion gate and registry]
-    F --> G[Batch scoring job]
-    G --> H[Prediction logs]
-```
-
-The contract is the seam. Everything left of it is inference — rank statistics,
-weight-of-evidence tables, two-sample tests — and everything right of it is the model
-lifecycle. Nothing crosses but a stamped JSON file.
-
-Boundaries, what each box does not do, and why: [docs/architecture.md](docs/architecture.md).
-
 | If you came here for | Start at |
 | --- | --- |
 | The data and the modelling | [`analysis/`](analysis/README.md) — the R half: eight analyses, one question each, every verdict a statistic with an interval on it |
+| The features themselves | [feature-engineering.md](docs/feature-engineering.md) for the twelve engineered features and their entities, [`references/`](references/README.md) for the pinned artefacts they are built against |
 | The pipeline and its boundaries | [orchestration.md](docs/orchestration.md), including the three asset graphs as a running instance renders them, then [code-structure.md](docs/code-structure.md) |
 | The cloud and the infrastructure | [google-cloud.md](docs/google-cloud.md) for the service choices, [`iaac/`](iaac/README.md) for the OpenTofu, [setup.md](docs/setup.md) for the runbook |
 | Whether the results hold up | [MEASUREMENTS.md](docs/MEASUREMENTS.md) for the numbers, [DECISIONS.md](DECISIONS.md) for what was reversed |
+| What was borrowed and what is original | [ATTRIBUTION.md](ATTRIBUTION.md) — every idea taken from published Kaggle work, and what this repository does differently with it |
 | Risk and model governance | [model-card.md](docs/model-card.md), [point-in-time.md](docs/point-in-time.md), [adversarial-drift.md](docs/adversarial-drift.md) |
 
 ## What the pipeline enforces
@@ -42,17 +26,17 @@ contract's fingerprint onto the model; scoring compares it against the file on d
 refuses to run on a mismatch.
 
 **Rejections that are tests, not thresholds.** Every verdict needs two keys: statistical
-significance after a Benjamini–Hochberg correction across the scan, and a stated effect
-size. At 100,000 rows per window almost everything is significant — 469 of 472 columns
-move detectably — so significance alone decides nothing, and the materiality threshold is
+significance after a Benjamini-Hochberg correction across the scan, and a stated effect
+size. At 100,000 rows per window almost everything is significant -- 469 of 472 columns
+move detectably -- so significance alone decides nothing, and the materiality threshold is
 what does the discriminating.
 
-**Point-in-time feature computation.** Every velocity aggregate uses a `RANGE … 1 PRECEDING`
+**Point-in-time feature computation.** Every velocity aggregate uses a `RANGE ... 1 PRECEDING`
 window frame; `LAG`, `LEAD` and `ROWS` frames are banned, and tests assert they never appear in
 the generated SQL. Details, and the leak this caught: [docs/point-in-time.md](docs/point-in-time.md).
 
 **A promotion gate.** Five checks run inside `validation_gate` and raise `Failure`, so a
-regressed candidate fails the Dagster run instead of being annotated — including a check on the
+regressed candidate fails the Dagster run instead of being annotated -- including a check on the
 model's largest, weakest segment, because a pooled metric alone hides exactly that.
 
 ```mermaid
@@ -71,62 +55,155 @@ The numbers behind every claim above, and how far each can be trusted, are in
 [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md); what changed once they were measured is in
 [DECISIONS.md](DECISIONS.md).
 
+## The data
+
+The dataset covers 590,540 e-commerce transactions, of which 3.5% are fraudulent
+(Wilson 95% interval: [3.48%, 3.56%]). The time axis spans approximately six months.
+
+<p align="center">
+  <img src="docs/img/daily-fraud-rate.svg" width="70%" style="display: block; margin: 0 auto;"
+       alt="Daily fraud rate with Wilson intervals and the split boundaries">
+</p>
+
+*Daily fraud rate with 95% Wilson confidence bands. The dashed line is the pooled rate.
+The rate moves visibly across the period -- the structural break test (Bai-Perron) finds
+two level shifts, neither of which falls where the audit windows are cut. Computed by
+[why-the-validation-gap-is-not-a-mistake](analysis/notebooks/why-the-validation-gap-is-not-a-mistake.qmd).*
+
+Both caveats about the time axis apply here. The windows are quantiles of the time value,
+so they hold **equal numbers of rows and unequal amounts of calendar** -- 22.6 days early
+against 35.1 days late -- and part of what reads as a feature changing is the later window
+having watched for longer. The time column is never given to the joint two-sample test,
+because the periods are defined by it and any discriminator handed that column scores a
+perfect AUC without finding anything about the data.
+
+The split: train ends at 0.75 of the time axis, validation runs 0.85-0.90, and the ten
+percent between them is left unassigned because a chargeback arrives months after the
+transaction it belongs to.
+
+The fraud rate varies sharply by product: `W` carries most of the volume at a
+below-average rate, while other products run several times the pooled rate. The Wilson
+intervals do not overlap -- this is a real segmentation, not a sampling artefact, and it
+is why the promotion gate judges the model on its *largest* segment rather than on a
+pooled metric.
+
 ## The audits, as statistics
 
-Every verdict below is a test or an interval, not a threshold on a point
-estimate, and nothing in the column is a model. Where a check rejects, it needs
-two keys: significance after a Benjamini–Hochberg correction across the whole
-scan, and an effect size above a stated threshold. At 100,000 rows per window the
-first is nearly free — 469 of 472 columns shift detectably — so the second is
-what actually decides.
+Every verdict is a test or an interval, not a threshold on a point estimate, and
+nothing in the column is a model. Where a check rejects, it needs two keys:
+significance after a Benjamini-Hochberg correction across the whole scan, and an
+effect size above a stated threshold. At 100,000 rows per window the first is
+nearly free -- 469 of 472 columns shift detectably -- so the second is what
+actually decides.
 
-| Question | Method | R | Feeds the contract |
-| --- | --- | --- | --- |
-| Does a column carry signal at all? | Somers' D, identical to AUC on the Mann–Whitney scale | `Hmisc::somers2` | yes |
-| Is that signal distinguishable from none? | AUC with a DeLong confidence interval | `pROC::ci.auc` | yes |
-| Did it change between an early and a late window? | DeLong's test for two AUCs, unpaired | `pROC::roc.test` | yes |
-| Did it reverse direction? | Sign flips in the weight of evidence per bin, weighted by the mass they carry | own, on a pinned binning | yes |
-| How much information does it carry? | Information value over the same bins | own | reported |
-| Did the column's distribution move? | PSI against its **measured** null, drawn from the multivariate hypergeometric | own | yes |
-| Is the move more than sampling noise? | Anderson–Darling and Cramér–von Mises, permutation p-values | `twosamples` | yes |
-| Are the two periods distinguishable **jointly**? | Energy two-sample test — adversarial validation without the adversary | `energy::eqdist.etest` | reported |
-| How strong is a categorical dependence, and how precisely known? | Cramér's V with Bergsma's correction, bootstrapped on the contingency table | `DescTools`, own | reported |
-| Which columns restate their neighbours? | Variable clustering on rank correlation, cut on shared variance | `stats::hclust` on Spearman ρ² | yes |
-| Which are *reconstructable* from the others? | Redundancy analysis on restricted cubic splines | `Hmisc::redun` | yes |
-| How many dimensions does a block of V columns really have? | Horn's parallel analysis | `psych::fa.parallel` | reported |
-| Are the binary M columns one latent thing? | Tetrachoric correlation | `psych::tetrachoric` | reported |
-| Does an association survive conditioning on the product segment? | Cochran–Mantel–Haenszel | `stats::mantelhaen.test` | recorded, not applied |
-| Is it the *same* association in every segment? | Breslow–Day test for homogeneity of odds ratios | `DescTools::BreslowDayTest` | recorded, not applied |
-| Is a value missing at random? | Little's MCAR test, against always-observed columns | `naniar::mcar_test` | reported |
-| Is the reconstructed customer real? | Label purity against a permuted null that keeps the group sizes | own | the `entity` block |
-| Do the amounts look naturally generated? | Benford's law, with the effect size next to the p-value | `benford.analysis` | no |
-| How heavy is the tail of the losses? | Power-law tail index, Clauset–Shalizi–Newman | `poweRlaw` | no |
-| When did the fraud rate actually change? | Bai–Perron structural breaks | `strucchange::breakpoints` | no |
-| Is there a daily cycle? | Rayleigh's test — hour of day is circular, not linear | `circular::rayleigh.test` | no |
-| How concentrated is the customer base? | Gini and Herfindahl–Hirschman on transactions per entity | `ineq` | no |
-
-And the descriptive pass, which asks what is in front of the audits rather than
-whether a column can be trusted:
-
-| Question | Method | Feeds the contract |
+| Question | Method | R |
 | --- | --- | --- |
-| How much fraud is there, and does the rate hold still? | Wilson intervals on the daily rate | no |
-| Where does the fraud sit? | Fraud rate per product and per device-info presence, with non-overlapping Wilson intervals | no |
-| Does rarity predict fraud? | Fraud rate by frequency band, against each column's own base rate | no |
-| What does the amount say on its own? | Weight of evidence and information value over the amount | no |
-| Are the columns the type they claim? | Stored type against effective cardinality | no |
+| Does a column carry signal at all? | Somers' D, identical to AUC on the Mann-Whitney scale | `Hmisc::somers2` |
+| Did that signal change between an early and a late window? | DeLong's test for two AUCs, unpaired | `pROC::roc.test` |
+| Did the column's distribution move? | PSI against its **measured** null, drawn from the multivariate hypergeometric | own |
+| Is the move more than sampling noise? | Anderson-Darling and Cramer-von Mises, permutation p-values | `twosamples` |
+| Which columns are *reconstructable* from the others? | Redundancy analysis on restricted cubic splines | `Hmisc::redun` |
+| Are the two periods distinguishable **jointly**? | Energy two-sample test -- adversarial validation without the adversary | `energy::eqdist.etest` |
 
-Reports: [`analysis/`](analysis/README.md), one notebook per question, rendered
-with Quarto. Every one of them writes either a contract fragment or a table, and
+A few more statistics, the descriptive pass, and which of the three each one
+can do to the contract -- reject, record, or nothing:
+[`analysis/README.md`](analysis/README.md). One notebook per question, rendered
+with Quarto; every one writes either a contract fragment or a table, and
 `build-contract.qmd` merges the fragments without computing anything.
 
-Two caveats that apply to everything above and are stated where they bite. The
-windows are quantiles of the time value, so they hold equal numbers of rows and
-**unequal amounts of calendar** — 22.6 days early against 35.1 late — and part of
-what reads as a feature changing is the later window having watched for longer.
-And the time column is never given to the joint two-sample test: with it present
-any discriminator separates the periods perfectly, which is where the folklore
-that "adversarial AUC is 1 on this competition" partly comes from.
+### What the audits found
+
+**[Time consistency](analysis/notebooks/does-a-feature-still-mean-the-same-later.qmd).** A feature that
+separates fraud one way early and the other way late has not found a weak signal -- it has
+found a pattern that belongs to the past. The pipeline fits a WoE scorecard on the early
+window and applies it unchanged to the late one, then plots the AUC of each against the
+other, one point per column: the shaded quadrant, signal early and reversed late, is the
+finding. `V150` is the clearest
+case -- its two upper bins became empty in the later window and the WoE of the surviving bin
+changed sign, from -0.30 to +0.49. The column did not merely weaken; its populated range
+collapsed and the odds attached to what survived reversed.
+
+<p align="center">
+  <img src="docs/img/time-consistency-scatter.svg" width="70%" style="display: block; margin: 0 auto;"
+       alt="AUC early against AUC late">
+</p>
+
+**[Distribution shift](analysis/notebooks/has-the-population-moved.qmd).** The same two
+windows, asking about a column's own distribution rather than its relationship to the label.
+Of 499 measurable columns every single one moves detectably and 200 move materially -- the
+two-key rule visible inside one audit. It also separates two things a single index conflates:
+`M7`, `M8` and `M9` post among the largest indices in the scan, and almost none of it is
+about their values. Each went from 84% missing to 39% missing between the windows, and with
+the empty bucket excluded their distributions are unchanged (0.0006 to 0.0047). A column
+that *started being collected* looks exactly like a column that broke.
+
+<p align="center">
+  <img src="docs/img/distribution-shift.svg" width="70%" style="display: block; margin: 0 auto;"
+       alt="Distribution shift">
+</p>
+
+**[Redundancy](analysis/notebooks/which-columns-say-the-same-thing-twice.qmd).** Correlation names a pair;
+redundancy names the one to drop. Of the columns strongly correlated with a group-mate, only
+a fraction are actually *reconstructable* from that group -- the rest correlate strongly and
+still carry something nothing else does. The sensitivity of the partition to its own
+threshold is checked below: it responds smoothly on both sides, so the policy setting is
+not perched on a cliff edge. Horn's
+parallel analysis adds the second angle -- across the pinned V-blocks the compression ratio
+runs 4x to 11x, and `V143-V166` is eleven columns carrying one component with 94% of the
+variance, so keeping one representative per block is far less lossy than it looked.
+
+<p align="center">
+  <img src="docs/img/sensitivity.svg" width="70%" style="display: block; margin: 0 auto;"
+       alt="Clustering sensitivity">
+</p>
+
+**[Segment qualification](analysis/notebooks/does-a-column-work-inside-every-segment.qmd).** A column can
+separate fraud across the whole table and separate nothing inside every product segment --
+in which case it predicts *which segment a row is in*, not fraud. Several columns reach
+pooled AUC as high as 0.70 and are constants inside the segment carrying most of the
+traffic. The fragment records this without rejecting: applying the verdicts cost 0.0325
+PR-AUC while moving the protected segment by 0.0005.
+
+<p align="center">
+  <img src="docs/img/segment-qualification.svg" width="70%" style="display: block; margin: 0 auto;"
+       alt="Segment qualification">
+</p>
+
+**[Entity reconstruction](analysis/notebooks/who-is-the-customer-when-the-data-does-not-say.qmd).** The
+dataset names no customer, and everything downstream needs one. Purity alone says nothing at
+a 3.5% base rate -- a group of two rows is homogeneous 93% of the time by chance -- so the
+lift over a permuted null is what is measured. It runs the other way from raw purity: each
+component added buys less than the one before, because each also shatters groups into
+singletons. Adding `card2` buys nothing (lift 0.0403 against 0.0405) while costing coverage.
+Roughly half the table has no usable history at prediction time, so the gate's cold-entity
+check is not an edge case -- it is most of the traffic.
+
+<p align="center">
+  <img src="docs/img/purity.svg" width="70%" style="display: block; margin: 0 auto;"
+       alt="Label purity of the reconstructed entity against a permuted null">
+</p>
+
+**[Forensic checks](analysis/notebooks/what-the-fraud-literature-asks-that-the-columns-do-not.qmd).** Five
+classical tests that no per-column scan reaches. None feeds the contract; all describe what
+is being modelled. The amounts are *close* to Benford --
+[the leading-digit plot](docs/img/benford-plot.svg) shows the chi-square rejecting conformity
+overwhelmingly while the effect size stays marginal, which is what 20,000 observations do to
+a p-value. [Bai-Perron](docs/img/bai-perron-breakpoints.svg) finds two level shifts in the
+daily rate, neither where the audit windows are cut, so a drift monitor pinned to that
+convention would report late. And
+[fraud rate by hour](docs/img/circular-fraud-rate.svg), plotted on the circle rather than the
+line, shows a cycle Rayleigh rejects uniformity against strongly -- but `TransactionDT` is
+seconds from an unpublished origin, so the cycle can be modelled and the hour cannot be named.
+
+## The Dagster asset graphs
+
+Three code locations, three graphs. These are rendered by a running instance.
+
+| Graph | What it builds |
+| --- | --- |
+| `feature_platform_job` | Ingestion -> BigQuery tables -> feature SQL -> audit frame |
+| `model_factory_job` | Training run -> validation gate -> promotion marker -> Vertex registry |
+| `inference_job` | Promotion marker -> scoring run -> submission + prediction logs |
 
 ## Stack
 
@@ -168,54 +245,21 @@ The test suite needs no cloud access. One ingestion test reads a local sample at
 do not allow redistributing the data; create it from your own Kaggle download first. Running
 the pipeline against the full dataset needs a GCP project, see [docs/setup.md](docs/setup.md).
 
-## Every document
-
-| | |
-| --- | --- |
-| [DECISIONS.md](DECISIONS.md) | Architectural decisions, dated, with the evidence behind each |
-| [ATTRIBUTION.md](ATTRIBUTION.md) | What came from published Kaggle work and what this repository does differently |
-| [docs/architecture.md](docs/architecture.md) | Modules, boundaries, and what is out of scope |
-| [docs/google-cloud.md](docs/google-cloud.md) | Which GCP services are used, which are not, and the platform details behind both |
-| [docs/MEASUREMENTS.md](docs/MEASUREMENTS.md) | Every number and how far it can be trusted |
-| [docs/point-in-time.md](docs/point-in-time.md) | The leakage guarantee and its enforcement |
-| [docs/feature-engineering.md](docs/feature-engineering.md) | The twelve engineered features and their entities |
-| [docs/model-card.md](docs/model-card.md) | Intended use, weaknesses, preconditions for real deployment |
-| [docs/adversarial-drift.md](docs/adversarial-drift.md) | What changes when the distribution has an author |
-| [docs/orchestration.md](docs/orchestration.md) | Code locations, groups, jobs, checks, unused Dagster features |
-| [docs/code-structure.md](docs/code-structure.md) | The R/Python seam, the import rule, and the tests that enforce both |
-| [docs/setup.md](docs/setup.md) | Local setup and runbook |
-| [analysis/README.md](analysis/README.md) | The R half: every audit, stated as a statistic |
-| [references/README.md](references/README.md) | Pinned artefacts |
-
 ## Repository layout
 
 ```text
-analysis/                  the R half: every audit and the descriptive pass
-    R/                     rank statistics, weight of evidence, two-sample tests
-    notebooks/             one question each, each writing a contract fragment
-    build-contract.qmd     the merge, and the contract as a document
-    out/                   fragments and tables, committed so a verdict can be looked up
-    tests/testthat/        one suite per module, 59 blocks
-config/                    admission policy, training and orchestration settings
-dagster/                   workspace and instance configuration
-iaac/                      infrastructure as code (OpenTofu)
-references/                feature contract, frequency maps, V-block column groups
-schemas/                   BigQuery schemas, read by both Python and OpenTofu
-src/fraud_detection/      the Python half: the model lifecycle
-    config.py              every setting, read from config/*.toml
-    schema.py              the shared vocabulary: tables, columns, entity components
-    contract/              the feature contract, and the command that stamps it
-    features/              SQL derivations, row-local features, the entity key
-    training/              the modelling recipe, importable from a notebook
-    registry/              promotion marker and provenance record
-    tools/                 hand-run commands that reach BigQuery or GCS
-    serving/               /predict, /health, and the batch scoring job
-    orchestration/         Dagster assets, resources, catalog labels
-tests/                     unit tests, including the point-in-time and layering rules
+analysis/              the R half: the audits, the notebooks, the fragments they write
+config/                admission policy, training and orchestration settings
+dagster/               workspace and instance configuration
+iaac/                  infrastructure as code (OpenTofu)
+references/            feature contract, frequency maps, V-block column groups
+schemas/               BigQuery schemas, read by both Python and OpenTofu
+src/fraud_detection/   the Python half: the model lifecycle
+tests/                 unit tests, including the point-in-time and layering rules
 ```
 
 **The two halves.** `analysis/` decides what is true of the data and is R; `src/` decides
-what is done with a model and is Python. Nothing crosses but the stamped contract — no
+what is done with a model and is Python. Nothing crosses but the stamped contract -- no
 Python in `analysis/`, no R in `src/`, and one JSON file between them.
 
 **Inside the Python half**, every directory answers to exactly one box in the usual MLOps

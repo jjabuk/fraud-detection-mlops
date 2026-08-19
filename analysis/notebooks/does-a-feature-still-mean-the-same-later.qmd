@@ -127,7 +127,7 @@ report[, .N, by = .(verdict)][order(-N)]
 #| fig-width: 8
 #| fig-height: 5
 plot_data <- report[!is.na(auc_train)]
-ggplot(plot_data, aes(auc_train, auc_holdout, colour = verdict)) +
+p <- ggplot(plot_data, aes(auc_train, auc_holdout, colour = verdict)) +
   annotate("rect", xmin = 0.5, xmax = Inf, ymin = -Inf, ymax = 0.5,
            fill = "grey90", alpha = 0.6) +
   geom_hline(yintercept = 0.5, linewidth = 0.3) +
@@ -141,6 +141,13 @@ ggplot(plot_data, aes(auc_train, auc_holdout, colour = verdict)) +
        title = "The shaded quadrant is the finding",
        subtitle = "Signal early, reversed signal late. Points on the dashed line kept their meaning.") +
   theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank())
+p
+```
+
+```{r save-plot}
+#| echo: false
+ggsave("../../docs/img/time-consistency-scatter.svg", plot = p,
+       width = 8, height = 5, dpi = 300, bg = "white")
 ```
 
 ## Why a test and not a threshold

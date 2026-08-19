@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='576.00pt' height='360.00pt' viewBox='0 0 576.00 360.00'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: #FFFFFF;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1NzYuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='576.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHwzNjAuMDA=)'>
+<rect x='0.00' y='0.00' width='576.00' height='360.00' style='stroke-width: 1.16; stroke: none; fill: #FFFFFF;' />
+</g>
+<defs>
+  <clipPath id='cpMzguNzl8NTcwLjAyfDQyLjM4fDI3NC4zMg=='>
+    <rect x='38.79' y='42.38' width='531.23' height='231.95' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMzguNzl8NTcwLjAyfDQyLjM4fDI3NC4zMg==)'>
+<polyline points='38.79,263.78 570.02,263.78 ' style='stroke-width: 0.58; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='38.79,185.68 570.02,185.68 ' style='stroke-width: 0.58; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='38.79,107.59 570.02,107.59 ' style='stroke-width: 0.58; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='38.79,224.73 570.02,224.73 ' style='stroke-width: 1.16; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='38.79,146.64 570.02,146.64 ' style='stroke-width: 1.16; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='38.79,68.54 570.02,68.54 ' style='stroke-width: 1.16; stroke: #EBEBEB; stroke-linecap: butt;' />
+<rect x='70.41' y='136.04' width='44.27' height='713.46' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #1F4E79;' />
+<rect x='196.90' y='112.78' width='44.27' height='736.72' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #1F4E79;' />
+<rect x='323.38' y='79.81' width='44.27' height='769.69' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #1F4E79;' />
+<rect x='449.86' y='79.76' width='44.27' height='769.74' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #1F4E79;' />
+<rect x='114.68' y='223.11' width='44.27' height='626.39' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #8C8C8C;' />
+<rect x='241.16' y='164.74' width='44.27' height='684.76' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #8C8C8C;' />
+<rect x='367.65' y='117.29' width='44.27' height='732.21' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #8C8C8C;' />
+<rect x='494.13' y='117.24' width='44.27' height='732.26' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #8C8C8C;' />
+<text x='114.68' y='131.88' text-anchor='middle' style='font-size: 9.67px; font-family: "Arial";' textLength='35.12px' lengthAdjust='spacingAndGlyphs'>lift 0.111</text>
+<text x='241.16' y='108.63' text-anchor='middle' style='font-size: 9.67px; font-family: "Arial";' textLength='36.56px' lengthAdjust='spacingAndGlyphs'>lift 0.067</text>
+<text x='367.65' y='75.65' text-anchor='middle' style='font-size: 9.67px; font-family: "Arial";' textLength='36.56px' lengthAdjust='spacingAndGlyphs'>lift 0.048</text>
+<text x='494.13' y='75.60' text-anchor='middle' style='font-size: 9.67px; font-family: "Arial";' textLength='36.56px' lengthAdjust='spacingAndGlyphs'>lift 0.048</text>
+</g>
+<g clip-path='url(#cpMC4wMHw1NzYuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='33.41' y='228.17' text-anchor='end' style='font-size: 9.60px;fill: #4D4D4D; font-family: "Arial";' textLength='13.33px' lengthAdjust='spacingAndGlyphs'>0.8</text>
+<text x='33.41' y='150.07' text-anchor='end' style='font-size: 9.60px;fill: #4D4D4D; font-family: "Arial";' textLength='13.33px' lengthAdjust='spacingAndGlyphs'>0.9</text>
+<text x='33.41' y='71.97' text-anchor='end' style='font-size: 9.60px;fill: #4D4D4D; font-family: "Arial";' textLength='13.33px' lengthAdjust='spacingAndGlyphs'>1.0</text>
+<text transform='translate(116.11,286.42) rotate(-12)' text-anchor='end' style='font-size: 9.60px;fill: #4D4D4D; font-family: "Arial";' textLength='23.97px' lengthAdjust='spacingAndGlyphs'>card1</text>
+<text transform='translate(242.59,286.42) rotate(-12)' text-anchor='end' style='font-size: 9.60px;fill: #4D4D4D; font-family: "Arial";' textLength='59.42px' lengthAdjust='spacingAndGlyphs'>card1 + addr1</text>
+<text transform='translate(369.08,286.42) rotate(-12)' text-anchor='end' style='font-size: 9.60px;fill: #4D4D4D; font-family: "Arial";' textLength='82.62px' lengthAdjust='spacingAndGlyphs'>card1 + addr1 + D1</text>
+<text transform='translate(495.56,286.42) rotate(-12)' text-anchor='end' style='font-size: 9.60px;fill: #4D4D4D; font-family: "Arial";' textLength='117.55px' lengthAdjust='spacingAndGlyphs'>card1 + card2 + addr1 + D1</text>
+<text transform='translate(14.57,158.35) rotate(-90)' text-anchor='middle' style='font-size: 12.00px; font-family: "Arial";' textLength='288.11px' lengthAdjust='spacingAndGlyphs'>share of multi-row groups that are label-homogeneous</text>
+<rect x='188.97' y='331.54' width='15.73' height='15.73' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #1F4E79;' />
+<rect x='283.74' y='331.54' width='15.73' height='15.73' style='stroke-width: 1.16; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #8C8C8C;' />
+<text x='211.46' y='342.84' style='font-size: 9.60px; font-family: "Arial";' textLength='65.53px' lengthAdjust='spacingAndGlyphs'>observed purity</text>
+<text x='306.22' y='342.84' style='font-size: 9.60px; font-family: "Arial";' textLength='114.39px' lengthAdjust='spacingAndGlyphs'>purity under shuffled labels</text>
+<text x='38.79' y='33.88' style='font-size: 12.00px; font-family: "Arial";' textLength='360.09px' lengthAdjust='spacingAndGlyphs'>The gap between the bars is the only part the reconstruction earned</text>
+<text x='38.79' y='16.28' style='font-size: 14.40px; font-family: "Arial";' textLength='257.61px' lengthAdjust='spacingAndGlyphs'>Almost all of the purity is the group sizes</text>
+</g>
+</g>
+</svg>

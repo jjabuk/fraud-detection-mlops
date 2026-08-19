@@ -117,7 +117,7 @@ the drift is entirely real.
 #| fig-width: 8
 #| fig-height: 5
 plot_data <- report[!is.na(psi) & !is.na(psi_excl_null)]
-ggplot(plot_data, aes(pmax(psi, 1e-5), pmax(psi_excl_null, 1e-5))) +
+p <- ggplot(plot_data, aes(pmax(psi, 1e-5), pmax(psi_excl_null, 1e-5))) +
   annotate("rect", xmin = 0.25, xmax = Inf, ymin = 1e-5, ymax = 0.25,
            fill = "grey90", alpha = 0.7) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", linewidth = 0.3) +
@@ -129,6 +129,13 @@ ggplot(plot_data, aes(pmax(psi, 1e-5), pmax(psi_excl_null, 1e-5))) +
        title = "In the shaded band the shift is missingness, not values",
        subtitle = "Points on the dashed line moved for the reason the index suggests") +
   theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank())
+p
+```
+
+```{r save-plot-decomposition}
+#| echo: false
+ggsave("../../docs/img/distribution-shift.svg", plot = p,
+       width = 8, height = 5, bg = "white")
 ```
 
 ## Are the periods distinguishable jointly?
