@@ -69,7 +69,6 @@ test_that("the pipeline key check compares partitions, not strings", {
     D1 = c(0, 1, 0, 0), TransactionDT = c(0, 86400, 0, 0),
     client_uid = c("1_10_0", "1_10_0", "2_20_0", NA))
   out <- verify_against_pipeline_key(frame, c("card1", "addr1"), anchor = "D1")
-  expect_true(out$available)
   expect_equal(out$agreement, 1)
   expect_equal(out$groups_here, out$groups_pipeline)
 })
@@ -82,9 +81,13 @@ test_that("a disagreement is reported rather than rounded away", {
   expect_lt(verify_against_pipeline_key(frame, c("card1", "addr1"), anchor = "D1")$agreement, 1)
 })
 
-test_that("an export predating the column says so instead of passing", {
+test_that("a missing column stops rather than reporting something reassuring", {
+  # This returned a polite `available = FALSE` and rendered its note in the
+  # notebook on an export that *had* the column -- the caller had simply not
+  # asked for it by name. The check was never once run on the data it exists
+  # for, and said so in a way that read like a result.
   frame <- data.table::data.table(card1 = 1:3, addr1 = 1:3, D1 = 0, TransactionDT = 0)
-  out <- verify_against_pipeline_key(frame, c("card1", "addr1"), anchor = "D1")
-  expect_false(out$available)
-  expect_match(out$note, "predates")
+  expect_error(
+    verify_against_pipeline_key(frame, c("card1", "addr1"), anchor = "D1"),
+    "EXCLUDED_COLUMNS")
 })

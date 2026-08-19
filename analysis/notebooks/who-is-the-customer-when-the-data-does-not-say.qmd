@@ -175,14 +175,16 @@ separators, so what has to match is which rows group together.
 
 ```{r verify}
 check <- verify_against_pipeline_key(win$train, c("card1", "addr1"), anchor = "D1")
-if (isTRUE(check$available)) {
-  data.table(agreement = check$agreement,
-             groups_here = check$groups_here, groups_pipeline = check$groups_pipeline,
-             null_here = round(check$null_here, 4), null_pipeline = round(check$null_pipeline, 4))
-} else {
-  check$note
-}
+data.table(agreement = check$agreement,
+           groups_here = check$groups_here, groups_pipeline = check$groups_pipeline,
+           null_here = round(check$null_here, 4), null_pipeline = round(check$null_pipeline, 4))
 ```
+
+A missing column stops this notebook rather than printing a note about it. The
+soft version rendered "this export predates the column" on an export that had
+one — the column simply had not been asked for by name — so the check reported
+something reassuring while never running. A soft failure that looks like a
+result is worse than no check.
 
 A disagreement here would not be a tie to break by preference. It would mean the
 statement and this analysis describe different entities, and every purity figure

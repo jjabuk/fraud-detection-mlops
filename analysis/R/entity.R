@@ -121,17 +121,25 @@ entity_coverage <- function(uid, time) {
 #' and the analysis are describing different entities, and every purity figure
 #' above is then about something other than what the model splits on.
 #'
-#' @return A list with the agreement rate and the two null counts. `available`
-#'   is FALSE when the frame predates the column, which is the only case where
-#'   this cannot be checked rather than a case where it passed.
+#' A missing column raises. It used to return `available = FALSE` with a polite
+#' note, and the note rendered in the notebook on an export that *had* the
+#' column -- because `client_uid` is in `EXCLUDED_COLUMNS`, so the caller has to
+#' ask for it by name, and the caller did not. The check was therefore written,
+#' tested against a synthetic frame, and never once run on the data it exists
+#' for, while reporting something reassuring.
+#'
+#' A soft failure that looks like a result is worse than no check. This one stops.
+#'
+#' @return A list with the agreement rate, the group counts and the null shares.
 verify_against_pipeline_key <- function(frame, columns, anchor = NULL,
                                         time = "TransactionDT",
                                         uid_column = "client_uid") {
   if (!uid_column %in% names(frame)) {
-    return(list(available = FALSE, note = paste0(
-      "`", uid_column, "` is not in the frame -- it is produced by the ",
-      "feature-engineering statement, so this export predates it. Re-run the ",
-      "pipeline and export again to check the two agree.")))
+    stop("`", uid_column, "` is not in the frame. It is an entity key, so it is in ",
+         "`EXCLUDED_COLUMNS` and the default feature set leaves it out -- load it by ",
+         "name: `load_windows(path, features = c(..., \"", uid_column, "\"))`. If the ",
+         "export genuinely predates the column, re-run the pipeline and export again.",
+         call. = FALSE)
   }
 
   mine <- entity_uid(frame, columns, anchor = anchor, time = time)
@@ -146,13 +154,11 @@ verify_against_pipeline_key <- function(frame, columns, anchor = NULL,
     (as.integer(factor(mine)) == as.integer(factor(theirs))))
 
   list(
-    available = TRUE,
     agreement = mean(agree),
     null_here = mean(is.na(mine)),
     null_pipeline = mean(is.na(theirs)),
     groups_here = length(unique(stats::na.omit(mine))),
-    groups_pipeline = length(unique(stats::na.omit(theirs))),
-    note = ""
+    groups_pipeline = length(unique(stats::na.omit(theirs)))
   )
 }
 
