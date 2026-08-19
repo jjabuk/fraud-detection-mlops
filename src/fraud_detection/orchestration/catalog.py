@@ -13,7 +13,7 @@ a per-asset version would be worth the bookkeeping.
 
 from __future__ import annotations
 
-from fraud_detection.core.provenance import code_version
+from fraud_detection.registry.provenance import code_version
 
 #: Marks assets stale in the graph when the code that produces them moves.
 CODE_VERSION = code_version().short

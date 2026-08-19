@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from dagster import AssetKey, AutomationCondition, Failure, Output, asset
 
-from fraud_detection.core.schema import (
-    JOINED_TABLE,
-    RAW_DATASET,
-    RAW_IDENTITY_TABLE,
-    RAW_TRANSACTION_TABLE,
-    qualified,
-)
 from fraud_detection.orchestration.catalog import (
     BIGQUERY,
     CODE_VERSION,
     FEATURE_PLATFORM,
 )
 from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import (
+    JOINED_TABLE,
+    RAW_DATASET,
+    RAW_IDENTITY_TABLE,
+    RAW_TRANSACTION_TABLE,
+    qualified,
+)
 
 # The anonymized block. Every one of these lives in the transaction table,
 # whose schema is pinned in Terraform -- so if one ever goes missing, this

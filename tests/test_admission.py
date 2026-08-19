@@ -12,7 +12,7 @@ from datetime import date
 
 import pytest
 
-from fraud_detection.core.feature_contract import (
+from fraud_detection.contract import (
     ContractError,
     FeatureContract,
     Fragment,
@@ -21,7 +21,7 @@ from fraud_detection.core.feature_contract import (
     from_admission_rules,
     load_admission_rules,
 )
-from fraud_detection.core.feature_contract.admission import ADMISSION_FILE, AdmissionError, Override
+from fraud_detection.contract.admission import ADMISSION_FILE, AdmissionError, Override
 
 DECLARED = {
     "TransactionAmt": (Source.REQUEST, "float"),

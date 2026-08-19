@@ -17,7 +17,7 @@ from pathlib import Path
 
 from dagster import AssetCheckResult, AssetCheckSeverity, asset_check
 
-from fraud_detection.core.feature_contract import (
+from fraud_detection.contract import (
     ContractError,
     FeatureContract,
     load_admission_rules,

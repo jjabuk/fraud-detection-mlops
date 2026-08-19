@@ -2,8 +2,8 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-# Project root is three levels up from src/fraud_detection/core/config.py
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+# Two levels up from src/fraud_detection/config.py, then out of `src/`.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_DIR = PROJECT_ROOT / "config"
 
 
@@ -16,9 +16,9 @@ def resolve_repo_path(relative: str | Path) -> Path:
       copied in beside the package, so a plain relative path resolves — the Dockerfile
       says so explicitly and that behaviour has to keep working;
     * the **pipeline and tests** run from the repository root, where it also resolves;
-    * a **notebook** runs from `eda/notebooks/`, where it does not. `load_admission_rules()`
-      raised "no admission file at config/feature-admission.toml", and the file was right
-      there — two directories up.
+    * an **analysis** runs from `analysis/` or `analysis/notebooks/`, where it does not:
+      `load_admission_rules()` raises "no admission file at config/feature-admission.toml"
+      with the file sitting one or two directories up.
 
     So: honour the working directory first, because that is the container's contract, and
     fall back to the package's own location, which is where a notebook needs it. Anchoring

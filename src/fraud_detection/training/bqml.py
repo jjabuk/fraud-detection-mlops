@@ -1,6 +1,6 @@
 # Where the validation gate looks up what "above baseline" currently means.
-from fraud_detection.core.config import get_training_params
-from fraud_detection.core.schema import FEATURE_COLUMNS
+from fraud_detection.config import get_training_params
+from fraud_detection.schema import FEATURE_COLUMNS
 
 _bqml_cfg = get_training_params("training.bqml")
 BASELINE_MODEL = _bqml_cfg["baseline_model"]

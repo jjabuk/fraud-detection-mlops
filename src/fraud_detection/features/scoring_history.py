@@ -22,7 +22,7 @@ class SchemaField(Protocol):
     field_type: str
 
 
-from fraud_detection.core.schema import ORIGIN_COLUMN, ORIGIN_TEST, ORIGIN_TRAIN
+from fraud_detection.schema import ORIGIN_COLUMN, ORIGIN_TEST, ORIGIN_TRAIN
 
 __all__ = ["SCORING_HISTORY_SQL", "align_to_training_schema", "build_scoring_history_sql"]
 

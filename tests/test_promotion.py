@@ -13,7 +13,7 @@ import json
 
 import pytest
 
-from fraud_detection.core.promotion import (
+from fraud_detection.registry.promotion import (
     PromotionError,
     assert_marker_is_current,
     parse_promotion_marker,

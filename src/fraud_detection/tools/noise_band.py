@@ -38,16 +38,13 @@ import numpy as np
 import polars as pl
 from sklearn.metrics import average_precision_score, roc_auc_score
 
-from fraud_detection.core.feature_contract import FeatureContract
-from fraud_detection.core.feature_contract.admission import load_admission_rules
-from fraud_detection.core.schema import (
-    CLIENT_ENTITY_ANCHOR,
-    CLIENT_ENTITY_COMPONENTS,
+from fraud_detection.contract import CONTRACT_FILE, FeatureContract
+from fraud_detection.contract.admission import load_admission_rules
+from fraud_detection.features.entity import seen_entity_flag
+from fraud_detection.schema import (
     MODEL_INPUT_TABLE,
     SPLIT_TABLE,
 )
-from fraud_detection.evaluation.entity_purity import Anchor, EntityKey, seen_entity_flag
-from fraud_detection.orchestration.assets.feature_audit import CONTRACT_FILE
 from fraud_detection.training.data import load_raw_split, split_with_contract
 from fraud_detection.training.model import train_lightgbm
 
@@ -75,10 +72,9 @@ def _load_splits(project: str):
     tables = {"model_input_table": MODEL_INPUT_TABLE, "split_table": SPLIT_TABLE}
     raw = {name: load_raw_split(client, project, name, **tables) for name in ("train", "val", "test")}
 
-    key = EntityKey(columns=CLIENT_ENTITY_COMPONENTS, anchors=(Anchor(CLIENT_ENTITY_ANCHOR),))
 
     def seen(holdout) -> pl.Series:
-        return seen_entity_flag(raw["train"], holdout, key).fill_null(False).cast(pl.Boolean)
+        return seen_entity_flag(raw["train"], holdout).fill_null(False).cast(pl.Boolean)
 
     splits = {
         name: split_with_contract(

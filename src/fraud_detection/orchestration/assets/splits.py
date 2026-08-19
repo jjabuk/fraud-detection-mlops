@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from dagster import AssetKey, AutomationCondition, Failure, Output, asset
 
-from fraud_detection.core.schema import (
-    FEATURES_DATASET,
-    MODEL_INPUT_TABLE,
-    SPLIT_TABLE,
-    qualified,
-)
 from fraud_detection.orchestration.catalog import (
     BIGQUERY,
     CODE_VERSION,
     MODEL_FACTORY,
 )
 from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import (
+    FEATURES_DATASET,
+    MODEL_INPUT_TABLE,
+    SPLIT_TABLE,
+    qualified,
+)
 
 # Percentiles are now loaded dynamically from config/feature-admission.toml, 
 # so the split fractions are not hard-coded here.
@@ -89,7 +89,7 @@ def split_assignment(
     bigquery_resource: BigQueryResource,
 ):
     """Assigns every transaction to train/val/test on the time axis."""
-    from fraud_detection.core.config import get_training_params
+    from fraud_detection.config import get_training_params
     from fraud_detection.orchestration.assets.feature_engineering import CARD_ENTITY_COLUMN
 
     client = bigquery_resource.get_client()

@@ -16,7 +16,7 @@ import numpy as np
 # Block at most this share of legitimate transactions. A business input, not a
 # statistical one: it says how much customer friction the operation will
 # tolerate, and everything else follows from it.
-from fraud_detection.core.config import get_training_params
+from fraud_detection.config import get_training_params
 
 _t_config = get_training_params("training.threshold")
 DEFAULT_FALSE_POSITIVE_BUDGET = _t_config["default_false_positive_budget"]

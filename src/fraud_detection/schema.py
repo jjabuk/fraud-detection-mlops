@@ -108,8 +108,8 @@ FEATURE_COLUMNS = [
 
 
 def uid_aggregate_feature_columns() -> list[str]:
-    from fraud_detection.core.feature_contract.admission import load_admission_rules
-    from fraud_detection.feature_engineering.features import uid_aggregate_columns
+    from fraud_detection.contract.admission import load_admission_rules
+    from fraud_detection.features.features import uid_aggregate_columns
 
     rules = load_admission_rules()
     wanted = set(rules.uid_std_of_derived)

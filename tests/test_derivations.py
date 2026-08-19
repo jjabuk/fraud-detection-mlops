@@ -11,10 +11,10 @@ from __future__ import annotations
 import polars as pl
 import pytest
 
-from fraud_detection.core.feature_contract import FeatureContract, Source, load_admission_rules
-from fraud_detection.core.feature_contract.admission import Derivation
-from fraud_detection.core.feature_contract.declaration import declare_columns
-from fraud_detection.feature_engineering.derivations import (
+from fraud_detection.contract import FeatureContract, Source, load_admission_rules
+from fraud_detection.contract.admission import Derivation
+from fraud_detection.contract.declaration import declare_columns
+from fraud_detection.features.derivations import (
     DERIVATIONS,
     DerivationError,
     apply_derivations,
@@ -150,10 +150,10 @@ from pathlib import Path
 import polars as _pl
 import pytest as _pytest
 
-from fraud_detection.feature_engineering.derivations import (
+from fraud_detection.features.derivations import (
     DerivationError as _DerivationError,
 )
-from fraud_detection.feature_engineering.derivations import (
+from fraud_detection.features.derivations import (
     frequency_encode,
     one_hot,
 )

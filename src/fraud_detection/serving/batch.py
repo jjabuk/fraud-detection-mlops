@@ -51,7 +51,6 @@ _load_dotenv()
 from dagster import build_asset_context
 from google.cloud import storage
 
-from fraud_detection.core.promotion import split_gcs_uri
 from fraud_detection.orchestration.assets.inference import (
     kaggle_submission,
     kaggle_test_joined,
@@ -63,6 +62,7 @@ from fraud_detection.orchestration.resources import (
     BigQueryResource,
     ModelArtifactStore,
 )
+from fraud_detection.registry.promotion import split_gcs_uri
 
 
 def main() -> None:
@@ -96,7 +96,7 @@ def main() -> None:
     print(f"Project: {bigquery_resource.project}")
 
     if args.skip_features:
-        from fraud_detection.core.schema import (
+        from fraud_detection.schema import (
             FEATURES_DATASET,
             TEST_MODEL_INPUT_TABLE,
             qualified,

@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 
-from fraud_detection.core.schema import (
+from fraud_detection.schema import (
     CARD_ENTITY_COLUMN,
     CLIENT_ENTITY_ANCHOR,
     CLIENT_ENTITY_COLUMN,
@@ -113,7 +113,7 @@ def build_uid_aggregate_sql(
     m_columns: Sequence[str] = (),
 ) -> str:
     """The SELECT-list fragment computing them. Empty string when nothing is declared."""
-    from fraud_detection.feature_engineering.derivations import DERIVATION_SQL
+    from fraud_detection.features.derivations import DERIVATION_SQL
 
     lines = []
     for derivation in derivations:

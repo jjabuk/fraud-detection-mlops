@@ -17,7 +17,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, brier_score_loss, log_loss
 from sklearn.model_selection import StratifiedKFold
 
-from fraud_detection.core.config import get_training_params
+from fraud_detection.config import get_training_params
 
 CALIBRATION_METHODS = ("isotonic", "platt")
 

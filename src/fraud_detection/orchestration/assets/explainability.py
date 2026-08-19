@@ -7,14 +7,14 @@ from dagster import AssetIn, AssetKey, AutomationCondition, Output, asset
 # `shap` package. LightGBM implements TreeSHAP in C++ and returns exactly the
 # same numbers; the package would add numba and llvmlite as dependencies to
 # call into it. Fewer dependencies, identical values.
-from fraud_detection.core.config import get_orchestration_params
-from fraud_detection.core.schema import MODEL_INPUT_TABLE
+from fraud_detection.config import get_orchestration_params
 from fraud_detection.orchestration.catalog import (
     CODE_VERSION,
     LIGHTGBM,
     MODEL_FACTORY,
 )
 from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import MODEL_INPUT_TABLE
 from fraud_detection.training.data import align_categories, to_lightgbm
 
 _expl_cfg = get_orchestration_params("explainability")
@@ -59,8 +59,8 @@ def model_explanations(
     # for as long as every declared derivation happened to be *rejected* by the audits.
     # The moment 22 encoded columns were admitted, the model's feature_names named columns
     # this frame had never heard of.
-    from fraud_detection.core.feature_contract.admission import load_admission_rules
-    from fraud_detection.feature_engineering.derivations import apply_derivations
+    from fraud_detection.contract.admission import load_admission_rules
+    from fraud_detection.features.derivations import apply_derivations
     from fraud_detection.training.data import load_raw_split, prepare_features
 
     raw = load_raw_split(

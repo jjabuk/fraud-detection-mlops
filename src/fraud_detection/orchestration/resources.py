@@ -13,7 +13,7 @@ from google.cloud import bigquery
 # machine's impersonated-service-account ADC the way bigquery.Client()
 # does when given one explicitly -- pass this everywhere instead of
 # relying on inference.
-from fraud_detection.core.config import get_orchestration_params
+from fraud_detection.config import get_orchestration_params
 
 _gcp_cfg = get_orchestration_params("gcp")
 DEFAULT_GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID", "local-test-project")

@@ -23,9 +23,9 @@ from pathlib import Path
 
 import polars as pl
 
-from fraud_detection.core.provenance import describe_code_version
-from fraud_detection.core.schema import MODEL_INPUT_TABLE, SPLIT_TABLE
-from fraud_detection.feature_engineering.derivations import FREQUENCY_MAP_FILE
+from fraud_detection.features.derivations import FREQUENCY_MAP_FILE
+from fraud_detection.registry.provenance import describe_code_version
+from fraud_detection.schema import MODEL_INPUT_TABLE, SPLIT_TABLE
 
 # High cardinality is the *precondition*, not the reason. One-hot on `DeviceInfo` (1,786
 # levels) or `id_31` (130) would add that many mostly-zero columns where this adds one

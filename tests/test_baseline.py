@@ -6,7 +6,6 @@ import pytest
 from dagster import Failure, build_asset_context
 
 import fraud_detection.orchestration.resources as resources_module
-from fraud_detection.core.schema import FEATURE_COLUMNS
 from fraud_detection.orchestration.assets import baseline as baseline_module
 from fraud_detection.orchestration.assets.baseline import (
     BASELINE_FEATURE_COLUMNS,
@@ -16,6 +15,7 @@ from fraud_detection.orchestration.assets.baseline import (
     bqml_baseline,
 )
 from fraud_detection.orchestration.resources import BigQueryResource, ModelArtifactStore
+from fraud_detection.schema import FEATURE_COLUMNS
 
 # BigQuery, GCS and the tracker are all mocked: the suite must not reach any
 # cloud service or create an experiment run.

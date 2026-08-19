@@ -7,12 +7,6 @@ from dagster import AssetIn, AssetKey, Failure, Output, asset
 from google.cloud import storage
 from sklearn.metrics import average_precision_score, roc_auc_score
 
-from fraud_detection.core.schema import (
-    FEATURES_DATASET,
-    LABEL_COLUMN,
-    MODEL_INPUT_TABLE,
-    qualified,
-)
 from fraud_detection.orchestration.catalog import (
     BIGQUERY,
     CODE_VERSION,
@@ -22,6 +16,12 @@ from fraud_detection.orchestration.resources import (
     BigQueryResource,
     ExperimentTracker,
     ModelArtifactStore,
+)
+from fraud_detection.schema import (
+    FEATURES_DATASET,
+    LABEL_COLUMN,
+    MODEL_INPUT_TABLE,
+    qualified,
 )
 from fraud_detection.training.bqml import (
     BASELINE_FEATURE_COLUMNS,

@@ -16,8 +16,8 @@ import pytest
 
 SRC = pathlib.Path(__file__).resolve().parents[1] / "src" / "fraud_detection"
 
-PURE = ("core", "evaluation", "training", "feature_engineering")
-ORCHESTRATION = {"orchestration", "resources"}
+PURE = ("config.py", "schema.py", "contract", "features", "training", "registry")
+ORCHESTRATION = {"orchestration", "resources", "tools"}
 FORBIDDEN_IN_PURE = {"dagster", "google"}
 
 
@@ -81,14 +81,19 @@ def test_the_package_root_stays_empty():
 
 
 def test_pure_layer_covers_what_a_notebook_needs():
-    """A guard against the layers being satisfied by being empty."""
+    """A guard against the layers being satisfied by being empty.
+
+    The list shrank when the audits moved to `analysis/`. What the rule protects is
+    unchanged and is now narrower and sharper: the entity key, the modelling recipe
+    and the contract are the three things an analysis has to be able to call
+    against the same implementation the pipeline runs.
+    """
     names = {label(m) for m in PURE_MODULES}
     for expected in (
-        "core/schema.py",
-        "evaluation/time_consistency.py",
-        "evaluation/entity_purity.py",
+        "schema.py",
+        "features/entity.py",
         "training/model.py",
-        "core/feature_contract/core.py",
+        "contract/core.py",
     ):
         assert expected in names, f"{expected} missing from the pure layer"
 
@@ -99,3 +104,24 @@ def test_assets_are_allowed_to_import_the_pure_layer():
         label(m) for m in modules("orchestration/assets") if imports_of(m)[1] & {"training", "evaluation", "core", "feature_engineering"}
     }
     assert reaching_in, "no asset uses the pure layer; the split would be decoration"
+
+
+def test_tools_may_reach_outside_and_the_pure_layer_may_not():
+    """The criterion that puts a module in `tools/` rather than in its concern.
+
+    A command that opens a BigQuery client is not pure-layer material however
+    much it is *about* features or training: importing it would drag a cloud SDK
+    into every notebook that touched the package it lived in. `tools/` is where
+    those go, and the direction is one-way.
+    """
+    reaching = {
+        label(m) for m in modules("tools") if imports_of(m)[0] & FORBIDDEN_IN_PURE
+    }
+    assert reaching, "tools/ holds nothing that reaches outside — the split earns nothing"
+
+    for module in PURE_MODULES:
+        _, internal = imports_of(module)
+        assert "tools" not in internal, (
+            f"{label(module)} imports from tools/. The dependency runs the other way: "
+            "tools compose the pure layer, never the reverse."
+        )

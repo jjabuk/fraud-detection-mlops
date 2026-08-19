@@ -55,7 +55,7 @@ __all__ = [
 # bit-reproducible, and observed run-to-run movement was ~0.003 PR-AUC -- the same size as
 # several findings this project has recorded. A comparison that cannot distinguish a real
 # effect from thread scheduling is not a comparison.
-from fraud_detection.core.config import get_training_params
+from fraud_detection.config import get_training_params
 
 LIGHTGBM_PARAMS = get_training_params("training.lightgbm")
 PRODUCT_COLUMN = "ProductCD"

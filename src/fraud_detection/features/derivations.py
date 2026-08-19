@@ -125,7 +125,7 @@ def load_frequency_maps(path: str | None = None) -> dict[str, dict[str, int]]:
     """Reads the pinned count table. Cached by the caller if it matters."""
     import json
 
-    from fraud_detection.core.config import resolve_repo_path
+    from fraud_detection.config import resolve_repo_path
 
     return json.loads(resolve_repo_path(path or FREQUENCY_MAP_FILE).read_text())["maps"]
 

@@ -6,7 +6,6 @@ import pytest
 from dagster import Failure, build_asset_context
 
 import fraud_detection.orchestration.resources as resources_module
-from fraud_detection.core.schema import JOINED_TABLE, RAW_IDENTITY_TABLE, RAW_TRANSACTION_TABLE
 from fraud_detection.orchestration.assets.join import (
     NULL_COUNT_COLUMN,
     V_COLUMNS,
@@ -14,6 +13,7 @@ from fraud_detection.orchestration.assets.join import (
     joined_transactions_identity,
 )
 from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import JOINED_TABLE, RAW_IDENTITY_TABLE, RAW_TRANSACTION_TABLE
 
 # BigQuery is always mocked here. A real run against the raw tables is a
 # manual/integration check, not part of this suite.

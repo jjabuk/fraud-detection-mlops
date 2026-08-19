@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import json
 
-from fraud_detection.core.promotion import parse_promotion_marker
-from fraud_detection.core.provenance import (
+from fraud_detection.registry.promotion import parse_promotion_marker
+from fraud_detection.registry.provenance import (
     UNKNOWN_SHA,
     CodeVersion,
     _from_env,
