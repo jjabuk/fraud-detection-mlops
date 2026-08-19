@@ -6,14 +6,14 @@ import pytest
 from dagster import Failure, build_asset_context
 
 import fraud_detection.orchestration.resources as resources_module
-from fraud_detection.core.schema import (
+from fraud_detection.orchestration.assets.model_input import build_feature_column_list, model_input
+from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import (
     FEATURE_COLUMNS,
     FEATURE_TABLE,
     JOINED_TABLE,
     MODEL_INPUT_TABLE,
 )
-from fraud_detection.orchestration.assets.model_input import build_feature_column_list, model_input
-from fraud_detection.orchestration.resources import BigQueryResource
 
 # BigQuery is always mocked here.
 
@@ -115,3 +115,32 @@ def test_query_failure_raises_dagster_failure(monkeypatch):
         model_input(build_asset_context(), BigQueryResource(project="test-project"))
 
     mock_client.get_table.assert_not_called()
+
+
+def test_model_input_carries_the_entity_key():
+    """The key is a column, and the pipeline depends on it being one.
+
+    Dropping it would not fail anything loudly: training would raise a `KeyError`
+    from `entity_ids`, but only at training time, and the temptation would be to
+    rebuild the identifier in Python. That is the duplication this carries to
+    avoid — one implementation, in the statement that already computes it.
+    """
+    from fraud_detection.orchestration.assets.model_input import (
+        MODEL_INPUT_SQL,
+        build_feature_column_list,
+    )
+    from fraud_detection.schema import CLIENT_ENTITY_COLUMN, EXCLUDED_COLUMNS
+
+    rendered = MODEL_INPUT_SQL.format(
+        client_entity_column=CLIENT_ENTITY_COLUMN,
+        destination_table="d",
+        joined_table="j",
+        feature_table="f",
+        feature_columns=build_feature_column_list(),
+    )
+    assert f"f.{CLIENT_ENTITY_COLUMN}" in rendered
+
+    # And it must stay out of the declaration: 217,735 levels over 590,540 rows is
+    # a memorised customer list, not a feature.
+    assert CLIENT_ENTITY_COLUMN in EXCLUDED_COLUMNS
+    assert CLIENT_ENTITY_COLUMN not in build_feature_column_list()

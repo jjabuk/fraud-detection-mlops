@@ -11,7 +11,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest import mock
 
-from fraud_detection.core.feature_contract import (
+from fraud_detection.contract import (
     FeatureContract,
     Fragment,
     Rejection,

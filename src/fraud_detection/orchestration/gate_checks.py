@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 from dagster import Failure
 
-from fraud_detection.core.config import get_orchestration_params
+from fraud_detection.config import get_orchestration_params
 
 _gate_cfg = get_orchestration_params("gate")
 

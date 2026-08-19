@@ -7,8 +7,8 @@ from dataclasses import dataclass
 
 import polars as pl
 
-from fraud_detection.core.schema import AMOUNT_COLUMN, EXCLUDED_COLUMNS, LABEL_COLUMN
-from fraud_detection.feature_engineering.derivations import apply_derivations
+from fraud_detection.features.derivations import apply_derivations
+from fraud_detection.schema import AMOUNT_COLUMN, EXCLUDED_COLUMNS, LABEL_COLUMN
 
 # Read through the BigQuery Storage API (Arrow, columnar) rather than the REST
 # download, which would hand back 590k rows across 442 columns as JSON. That

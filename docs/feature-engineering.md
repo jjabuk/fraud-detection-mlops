@@ -3,7 +3,7 @@
 What the feature table holds, what it does not, and how the model input is assembled from two
 tables rather than one. The leakage guarantee behind every aggregate here is in
 [point-in-time.md](point-in-time.md); the SQL is in
-[`feature_engineering/features.py`](../src/fraud_detection/feature_engineering/features.py).
+[`features/features.py`](../src/fraud_detection/features/features.py).
 
 ## 1. Two tables, joined at training time
 
@@ -32,7 +32,7 @@ Seven columns carried through (`TransactionID`, `TransactionDT`, `TransactionAmt
 aggregates, and a configurable block of client-level uid aggregates.
 
 The twelve are listed in
-[`core/schema.py`](../src/fraud_detection/core/schema.py) as `FEATURE_COLUMNS`, which the SQL
+[`schema.py`](../src/fraud_detection/schema.py) as `FEATURE_COLUMNS`, which the SQL
 that builds them, the assembly that names them and the contract that classifies them as
 retrieved-at-serving-time all read from.
 
@@ -67,7 +67,7 @@ reach the model, and the contract records why.
 `client_uid` is `card1 + addr1 + (day − D1)`, where `D1` is days since the card began, so
 `day − D1` recovers the day it began and is constant across that client's history. It reaches
 98.5% label purity against 84.8% for `card1`. The reconstruction is measured by
-[`evaluation/entity_purity.py`](../src/fraud_detection/evaluation/entity_purity.py) and pinned
+[`features/features.py`](../src/fraud_detection/features/features.py) as `CLIENT_UID_EXPRESSION`, carried into `model_input` as a column, and pinned
 by a test. Every client aggregate is computed over this grouping rather than over `card1`.
 
 `client_uid` is an entity key and never a feature; it is listed in `schema.EXCLUDED_COLUMNS`
@@ -94,7 +94,7 @@ and would have reintroduced the six duplicated pass-through columns.
 
 ## 4. Where the SQL lives
 
-The statement is built by `build_sql(...)` in `feature_engineering/features.py`, not embedded
+The statement is built by `build_sql(...)` in `features/features.py`, not embedded
 in the Dagster asset. The asset supplies table names and calls it, which is what lets the tests
 assert on the generated SQL without a warehouse and lets the uid block be generated from
 config rather than hand-maintained.
@@ -110,7 +110,7 @@ sample undercounts them. Slice a contiguous period, or read the whole file.
 
 **Reduction of `V1–V339`.** The redundancy audit found 129 representatives out of 339, a 62%
 cut. The full block stays until the retraining cost of dropping it is measured. See
-[`evaluation/README.md`](../src/fraud_detection/evaluation/README.md).
+[`analysis/README.md`](../analysis/README.md).
 
 **Online-shaped features.** This table is keyed by `TransactionID`. Serving would need one row
 per entity holding current state, which is the lookup described in

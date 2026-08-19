@@ -6,10 +6,10 @@ import pytest
 from dagster import Failure, build_asset_context
 
 import fraud_detection.orchestration.resources as resources_module
-from fraud_detection.core.config import get_training_params
-from fraud_detection.core.schema import CARD_ENTITY_COLUMN, MODEL_INPUT_TABLE, SPLIT_TABLE
+from fraud_detection.config import get_training_params
 from fraud_detection.orchestration.assets.splits import split_assignment
 from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import CARD_ENTITY_COLUMN, MODEL_INPUT_TABLE, SPLIT_TABLE
 
 # BigQuery is always mocked here.
 

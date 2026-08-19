@@ -7,10 +7,8 @@ See README.md for architectural documentation and graphs.
 from dagster import Definitions, ScheduleDefinition, define_asset_job
 
 from fraud_detection.orchestration.assets.feature_audit import (
-    distribution_shift_report,
+    audit_frame,
     feature_contract,
-    redundancy_report,
-    time_consistency_report,
 )
 from fraud_detection.orchestration.assets.feature_contract_check import (
     feature_contract_freshness,
@@ -50,10 +48,8 @@ defs = Definitions(
         joined_transactions_identity,
         transaction_features,
         model_input,
-        time_consistency_report,
-        distribution_shift_report,
-        redundancy_report,
-        feature_contract,
+        audit_frame,
+    feature_contract,
     ],
     asset_checks=[
         feature_contract_freshness,

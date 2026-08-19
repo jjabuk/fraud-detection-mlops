@@ -161,3 +161,27 @@ def test_the_bar_is_relative_so_a_harder_segment_is_not_punished_for_being_harde
 
     assert w_pr < c_pr           # W looks worse on the raw number ...
     assert w_pr / w_rate > c_pr / c_rate  # ... and is better against its own floor
+
+
+def test_the_audit_frame_is_an_asset_between_model_input_and_the_contract():
+    """The handoff to the R half is in the graph, so staleness is visible.
+
+    Dagster never runs the audits and cannot know when they ran. What it can know
+    is when the frame they read was produced and when the contract was stamped,
+    and the ordering of those two is the whole staleness signal. Without the frame
+    as an asset, "the contract was audited on an old export" is a thing nobody
+    thinks to check.
+    """
+    from dagster import AssetKey
+
+    from fraud_detection.orchestration.assets.feature_audit import audit_frame, feature_contract
+
+    frame_key = AssetKey(["fraud_detection", "audit_frame"])
+    assert frame_key in audit_frame.keys
+    assert AssetKey(["fraud_detection", "model_input"]) in audit_frame.asset_deps[frame_key]
+
+    contract_key = AssetKey(["fraud_detection", "feature_contract"])
+    assert frame_key in feature_contract.asset_deps[contract_key], (
+        "the contract must depend on the frame the audits read, not on model_input "
+        "directly — otherwise a re-export leaves the contract looking current"
+    )

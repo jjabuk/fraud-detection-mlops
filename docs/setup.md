@@ -5,6 +5,48 @@ and why it looks this way: [architecture.md](architecture.md).
 
 `<your-project-id>` means your GCP project ID throughout.
 
+
+## The audits (R)
+
+The analysis that produces the feature contract is an R package in `analysis/`. It is a
+separate toolchain on purpose: it depends on none of the Python environment, and the
+Python side depends on none of it beyond one JSON file.
+
+```bash
+brew install r quarto
+Rscript -e 'install.packages(c("targets","arrow","data.table","dplyr","pROC","Hmisc","jsonlite","energy","twosamples","DescTools","naniar","psych","ggplot2","testthat"))'
+```
+
+The frame the audits read is produced by the `audit_frame` asset, so the usual way to
+refresh it is a Dagster materialisation rather than a command:
+
+```bash
+uv run dagster asset materialize \
+  -m fraud_detection.orchestration.definitions.feature_platform \
+  --select fraud_detection/audit_frame
+```
+
+`uv run export-audit-frame` does the same thing from a local parquet, for when the
+warehouse is not reachable. Point `FRAUDAUDIT_PARQUET` elsewhere if the file is not at
+the default path under `data/local/cache/`:
+
+```bash
+cd analysis
+Rscript -e 'targets::tar_make()'                      # the audit graph
+Rscript -e 'testthat::test_dir("tests/testthat")'     # 59 blocks, no cloud, no data needed beyond the parquet
+quarto render                                          # the readable reports
+```
+
+Then stamp the contract, which is the only thing that crosses back into Python:
+
+```bash
+uv run stamp-contract
+```
+
+`uv run stamp-contract --check` compares the fragments against the committed contract and
+exits non-zero when they disagree, which is the form CI runs.
+
+
 ## Prerequisites
 
 - [`uv`](https://docs.astral.sh/uv/) for the Python environment
@@ -212,3 +254,62 @@ The time-consistency scan is about four minutes on eight cores. After a change t
 [`config/feature-admission.toml`](../config/feature-admission.toml) that does not affect how
 the reports were computed, materializing `feature_contract` alone reassembles from the
 existing report tables in seconds. Commit the resulting JSON.
+
+## Changing the feature SQL, or anything upstream of the contract
+
+Nothing here needs OpenTofu. `iaac/bigquery_features.tf` declares that the tables *exist*
+and carries `lifecycle { ignore_changes = [schema] }` with the description "managed by
+Dagster" — the schema is set by `CREATE OR REPLACE TABLE` in the statement itself, so a
+column added to a `SELECT` is not a `tofu apply`.
+
+Nothing needs a manual query either. Every asset carries `code_version=CODE_VERSION`,
+which is the repository's git SHA, so committing the change is what marks the affected
+assets stale; `model_input` then rematerialises under `AutomationCondition.eager()`.
+
+The full sequence, when the change reaches `model_input`:
+
+```bash
+git commit -am "..."                       # bumps CODE_VERSION, marks the graph stale
+
+# model_input and one layer down, which is audit_frame
+uv run dagster asset materialize \
+  -m fraud_detection.orchestration.definitions.feature_platform \
+  --select "fraud_detection/model_input+"
+
+cd analysis && Rscript -e 'targets::tar_make()' && quarto render
+cd .. && uv run stamp-contract
+
+# now the contract exists and can be checked
+uv run dagster asset materialize \
+  -m fraud_detection.orchestration.definitions.feature_platform \
+  --select "fraud_detection/feature_contract"
+```
+
+`+` is **one layer** downstream, not all of them — `*` is all of them. One layer is what
+this wants: it re-exports `audit_frame` in the same run, and stops before
+`feature_contract`, which has nothing to validate until the audits have run and the
+contract has been stamped. Selecting `model_input*` would materialise the contract asset
+against the fragments from the *previous* export and either pass on a stale file or fail
+for a reason that says nothing about the change being made.
+
+That is also why the contract is materialised separately at the end rather than folded in:
+it is a check, and a check belongs after the thing it checks.
+
+Then check the seam held:
+
+```bash
+uv run stamp-contract --check              # non-zero when the contract is out of date
+uv run pytest && cd analysis && Rscript -e 'testthat::test_dir("tests/testthat")'
+```
+
+`--check` is what CI runs. It stamps into memory from the fragments on disk and compares
+the fingerprint with the committed file, so a contract that was never re-stamped after an
+audit fails the build instead of quietly describing an older table. The
+`feature_contract` asset is the same guarantee inside the graph: it reads the committed
+file, recomputes its fingerprint, and fails the run on a mismatch, a stale timestamp or an
+admitted set below the policy floor.
+
+Dagster never runs R and cannot know when the audits ran. What it knows is when
+`audit_frame` was produced and when `feature_contract` was last materialised, and the
+ordering of those two is the staleness signal — visible in the UI, and the reason the
+frame is an asset rather than a step in this runbook.

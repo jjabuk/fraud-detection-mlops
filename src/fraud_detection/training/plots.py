@@ -26,7 +26,7 @@ import numpy as np
 import plotly.graph_objects as go
 from sklearn.metrics import precision_recall_curve, roc_curve
 
-from fraud_detection.core.config import get_training_params
+from fraud_detection.config import get_training_params
 from fraud_detection.training.calibration import ReliabilityCurve
 from fraud_detection.training.threshold import (
     COST_CANDIDATE_COUNT,

@@ -1,0 +1,202 @@
+---
+title: "What does this data look like?"
+subtitle: "The descriptive pass, with intervals on every rate"
+format:
+  html:
+    toc: true
+    code-fold: true
+    df-print: paged
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| include: false
+suppressPackageStartupMessages({
+  library(arrow); library(data.table); library(dplyr); library(pROC); library(Hmisc)
+  library(ggplot2)
+})
+invisible(lapply(list.files("../R", full.names = TRUE, pattern = "[.]R$"), source))
+PARQUET <- Sys.getenv("FRAUDAUDIT_PARQUET", "../../data/local/cache/audit_frame.parquet")
+d <- as.data.table(arrow::read_parquet(PARQUET))
+```
+
+The audits ask whether a column can be trusted. This asks what is in front of
+them: how much fraud there is, where it sits, and which columns are what they
+claim to be. Nothing here rejects anything.
+
+Every rate carries a **Wilson interval** rather than a bare proportion. At a 3.5%
+base rate, a segment with two hundred rows has a confidence interval about eight
+percentage points wide, and a table of point estimates invites conclusions that
+the sample sizes do not support.
+
+```{r wilson}
+#| include: false
+wilson <- function(x, n, conf = 0.95) {
+  z <- stats::qnorm(1 - (1 - conf) / 2)
+  p <- x / n; denom <- 1 + z^2 / n
+  centre <- (p + z^2 / (2 * n)) / denom
+  half <- z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2)) / denom
+  list(lo = pmax(0, centre - half), hi = pmin(1, centre + half))
+}
+```
+
+## How much fraud, and does the rate hold still?
+
+```{r base-rate}
+n <- nrow(d); k <- sum(d$isFraud)
+ci <- wilson(k, n)
+data.table(transactions = n, frauds = k,
+           base_rate = sprintf("%.3f%%", 100 * k / n),
+           ci_95 = sprintf("[%.3f%%, %.3f%%]", 100 * ci$lo, 100 * ci$hi),
+           days = round(diff(range(d$TransactionDT)) / 86400, 1))
+```
+
+```{r drift}
+#| fig-width: 8
+#| fig-height: 4
+daily <- d[, .(k = sum(isFraud), n = .N), by = .(day = floor(TransactionDT / 86400))][n > 200]
+daily[, c("lo", "hi") := wilson(k, n)]
+daily[, rate := k / n]
+
+ggplot(daily, aes(day, rate)) +
+  geom_ribbon(aes(ymin = lo, ymax = hi), fill = "#1f4e79", alpha = 0.18) +
+  geom_line(colour = "#1f4e79", linewidth = 0.5) +
+  geom_hline(yintercept = k / n, linetype = "dashed", colour = "#c1440e") +
+  labs(x = "day of the dataset", y = "fraud rate",
+       title = "Daily fraud rate with 95% Wilson bands",
+       subtitle = "Dashed line is the pooled rate") +
+  theme_minimal(base_size = 12) + theme(panel.grid.minor = element_blank())
+```
+
+The band is what stops a spike being read as an event: on a day with two thousand
+transactions the interval is wide enough to contain most of the visible movement.
+Where the level genuinely shifts is a different question, and it is answered with
+a structural break test in
+[what-the-fraud-literature-asks…](what-the-fraud-literature-asks-that-the-columns-do-not.qmd).
+
+## Where the fraud is
+
+```{r segments}
+seg <- d[, .(n = .N, k = sum(isFraud)), by = ProductCD][order(-n)]
+seg[, c("lo", "hi") := wilson(k, n)]
+seg[, `:=`(rate = k / n, share_of_volume = n / sum(n))]
+seg[, ratio_to_pooled := rate / (sum(k) / sum(n))]
+seg[, .(ProductCD, n, share_of_volume = sprintf("%.1f%%", 100 * share_of_volume),
+        fraud_rate = sprintf("%.2f%%", 100 * rate),
+        ci = sprintf("[%.2f%%, %.2f%%]", 100 * lo, 100 * hi),
+        vs_pooled = sprintf("%.1fx", ratio_to_pooled))]
+```
+
+The spread across products is the single largest source of fraud-rate variance in
+the table, and the intervals do not overlap — this is a real segmentation, not a
+sampling artefact. It is also why the promotion gate is judged on the *largest*
+segment rather than on a pooled metric: `W` carries most of the volume at a
+below-average rate, so a pooled number is mostly a statement about `W` while
+looking like a statement about everything.
+
+```{r device}
+d[, has_device := !is.na(DeviceType)]
+dev <- d[, .(n = .N, k = sum(isFraud)), by = has_device]
+dev[, c("lo", "hi") := wilson(k, n)]
+dev[, .(has_device, n, fraud_rate = sprintf("%.2f%%", 100 * k / n),
+        ci = sprintf("[%.2f%%, %.2f%%]", 100 * lo, 100 * hi))]
+```
+
+Whether device information is *present at all* separates fraud by a factor of
+several. That is the missingness-as-signal finding in its simplest form, and the
+formal version — is the absence random, and does it carry the label — is in
+[what-the-columns-are-made-of](what-the-columns-are-made-of.qmd).
+
+## Does rarity predict fraud?
+
+Frequency encoding replaces a category with how often it occurs. The premise is
+that rarity itself is informative, and it is worth checking rather than assuming.
+
+```{r rarity}
+rarity_profile <- function(col) {
+  x <- as.character(d[[col]])
+  freq <- table(x)
+  band <- cut(as.numeric(freq[x]), breaks = c(0, 10, 100, 1000, 10000, Inf),
+              labels = c("<10", "10-99", "100-999", "1k-10k", ">10k"), right = FALSE)
+  out <- data.table(band = band, y = d$isFraud)[!is.na(band),
+          .(n = .N, k = sum(y)), keyby = band]
+  out[, c("lo", "hi") := wilson(k, n)]
+  out[, `:=`(column = col, rate = k / n, ratio = (k / n) / (sum(k) / sum(n)))]
+  out[]
+}
+rbindlist(lapply(c("id_31", "DeviceInfo", "P_emaildomain"), rarity_profile))[
+  , .(column, band, n, fraud_rate = sprintf("%.2f%%", 100 * rate),
+      ci = sprintf("[%.2f%%, %.2f%%]", 100 * lo, 100 * hi),
+      vs_column_base = sprintf("%.1fx", ratio))]
+```
+
+Monotone, and steeply so: the rarest browser versions run several times the
+column's own base rate, and the relationship weakens smoothly as the level gets
+more common. That is the argument for frequency encoding, and it is an argument
+about *this* data rather than a technique borrowed on faith.
+
+## What the amount says
+
+```{r amount}
+b <- fit_binning(d$TransactionAmt, bins = 10L)
+tab <- woe_table(assign_bins(b, d$TransactionAmt), as.integer(d$isFraud))
+tab[, .(bin, n, fraud = pos, share = round(share, 4), woe = round(woe, 3),
+        iv_part = round(iv_part, 4))]
+```
+
+```{r amount-summary}
+data.table(
+  statistic = c("information value of the amount alone",
+                "median amount, legitimate", "median amount, fraudulent",
+                "mean amount, legitimate", "mean amount, fraudulent"),
+  value = c(round(information_value(tab), 4),
+            median(d[isFraud == 0]$TransactionAmt), median(d[isFraud == 1]$TransactionAmt),
+            round(mean(d[isFraud == 0]$TransactionAmt), 2),
+            round(mean(d[isFraud == 1]$TransactionAmt), 2))
+)
+```
+
+The amount is a weak signal on its own — the means differ by around a tenth, and
+the information value lands in the band conventionally read as weak. It is not
+useless: the weight of evidence is monotone across the upper bins, so it carries
+direction. It just cannot do much alone, which is worth knowing before anyone
+builds a rule on it.
+
+## Are the columns what they say they are?
+
+```{r types}
+profile <- rbindlist(lapply(setdiff(names(d), EXCLUDED_COLUMNS), function(cn) {
+  x <- d[[cn]]
+  data.table(column = cn,
+             stored = class(x)[[1]],
+             distinct = length(unique(x[!is.na(x)])),
+             null_share = mean(is.na(x)))
+}))
+profile[, effectively := fifelse(distinct <= 2, "binary",
+                          fifelse(distinct <= 20, "low-cardinality",
+                          fifelse(stored %in% c("character", "factor"), "categorical", "continuous")))]
+profile[, .N, by = .(stored, effectively)][order(-N)]
+```
+
+```{r types-mismatch}
+# Stored as a number, behaving like a category: the case that matters, because
+# every rank statistic in this package treats such a column as ordered and the
+# ordering is an artefact of whatever integer the encoder happened to assign.
+profile[stored %in% c("numeric", "integer") & distinct <= 20][order(distinct)][1:12,
+  .(column, distinct, null_share = round(null_share, 3))]
+```
+
+These are the columns where the declared type and the behaviour disagree. The
+audits handle them correctly by accident of design rather than by special case:
+the binning falls back to one bin per distinct value when the quantile grid
+collapses, which is exactly the right treatment for a discrete column, and the
+weight-of-evidence path never assumes the ordering means anything.
+
+Somers' D does assume it, which is why
+[`association.R`](../R/association.R) returns `NA` for unordered categoricals
+rather than coercing them — but for a *numeric* column with twelve levels it will
+happily report an ordinal association that may be meaningless. Those columns are
+read on their weight-of-evidence table, not on their D.

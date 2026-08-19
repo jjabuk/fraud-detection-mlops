@@ -3,7 +3,7 @@ from __future__ import annotations
 import polars as pl
 import pytest
 
-from fraud_detection.core.schema import EXCLUDED_COLUMNS
+from fraud_detection.schema import EXCLUDED_COLUMNS
 from fraud_detection.training.data import (
     align_categories,
     feature_columns,

@@ -5,7 +5,7 @@ Three things here are load-bearing and each was a bug before it was a decision.
 1. **The windows are computed over train ∪ test, not over test alone.** See
    `SCORING_HISTORY_SQL`.
 2. **The model comes from the promotion marker**, not from the newest blob — see
-   `fraud_detection.core.promotion`.
+   `fraud_detection.registry.promotion`.
 3. **The submission carries raw scores, not calibrated ones.** See `kaggle_submission`.
 """
 
@@ -17,26 +17,11 @@ import polars as pl
 from dagster import AssetIn, AssetKey, AutomationCondition, Failure, MaterializeResult, asset
 from google.cloud import bigquery, storage
 
-from fraud_detection.core.feature_contract import ContractError, FeatureContract
-from fraud_detection.core.feature_contract.admission import load_admission_rules
-from fraud_detection.core.provenance import describe_code_version
-from fraud_detection.core.schema import (
-    FEATURES_DATASET,
-    INFERENCE_DATASET,
-    JOINED_TABLE,
-    PREDICTION_LOG_TABLE,
-    RAW_DATASET,
-    RAW_TEST_IDENTITY_TABLE,
-    RAW_TEST_TRANSACTION_TABLE,
-    SCORING_FEATURE_TABLE,
-    SCORING_HISTORY_TABLE,
-    TEST_JOINED_TABLE,
-    TEST_MODEL_INPUT_TABLE,
-    qualified,
-)
-from fraud_detection.feature_engineering.derivations import apply_derivations
-from fraud_detection.feature_engineering.features import build_sql
-from fraud_detection.feature_engineering.scoring_history import (
+from fraud_detection.contract import ContractError, FeatureContract
+from fraud_detection.contract.admission import load_admission_rules
+from fraud_detection.features.derivations import apply_derivations
+from fraud_detection.features.features import build_sql
+from fraud_detection.features.scoring_history import (
     align_to_training_schema,
     build_scoring_history_sql,
 )
@@ -51,6 +36,22 @@ from fraud_detection.orchestration.catalog import (
     LIGHTGBM,
 )
 from fraud_detection.orchestration.resources import BigQueryResource, ModelArtifactStore
+from fraud_detection.registry.provenance import describe_code_version
+from fraud_detection.schema import (
+    CLIENT_ENTITY_COLUMN,
+    FEATURES_DATASET,
+    INFERENCE_DATASET,
+    JOINED_TABLE,
+    PREDICTION_LOG_TABLE,
+    RAW_DATASET,
+    RAW_TEST_IDENTITY_TABLE,
+    RAW_TEST_TRANSACTION_TABLE,
+    SCORING_FEATURE_TABLE,
+    SCORING_HISTORY_TABLE,
+    TEST_JOINED_TABLE,
+    TEST_MODEL_INPUT_TABLE,
+    qualified,
+)
 from fraud_detection.training.calibration import apply_calibrator
 from fraud_detection.training.data import prepare_features, to_lightgbm
 
@@ -193,6 +194,7 @@ def kaggle_test_model_input(
     destination = qualified(project, FEATURES_DATASET, TEST_MODEL_INPUT_TABLE)
     client.query(
         MODEL_INPUT_SQL.format(
+            client_entity_column=CLIENT_ENTITY_COLUMN,
             destination_table=destination,
             joined_table=kaggle_test_joined,
             feature_table=feature_table,

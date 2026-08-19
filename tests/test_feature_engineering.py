@@ -6,12 +6,6 @@ import pytest
 from dagster import Failure, build_asset_context
 
 import fraud_detection.orchestration.resources as resources_module
-from fraud_detection.core.schema import (
-    CARD_ENTITY_COLUMN,
-    DEVICE_ENTITY_COLUMN,
-    FEATURE_TABLE,
-    JOINED_TABLE,
-)
 from fraud_detection.orchestration.assets.feature_engineering import (
     CLIENT_ENTITY_COLUMN,
     WINDOW_1H_SECONDS,
@@ -19,6 +13,12 @@ from fraud_detection.orchestration.assets.feature_engineering import (
     transaction_features,
 )
 from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import (
+    CARD_ENTITY_COLUMN,
+    DEVICE_ENTITY_COLUMN,
+    FEATURE_TABLE,
+    JOINED_TABLE,
+)
 
 # BigQuery is always mocked here. A real run (against real data in the
 # raw table) is a manual/integration check, not part of this suite.

@@ -2,18 +2,8 @@ from __future__ import annotations
 
 from dagster import AssetKey, AutomationCondition, Failure, Output, asset
 
-from fraud_detection.core.feature_contract import load_admission_rules
-from fraud_detection.core.schema import (
-    CARD_ENTITY_COLUMN,
-    CLIENT_ENTITY_COLUMN,
-    DEVICE_ENTITY_COLUMN,
-    FEATURE_TABLE,
-    FEATURES_DATASET,
-    JOINED_TABLE,
-    RAW_DATASET,
-    qualified,
-)
-from fraud_detection.feature_engineering.features import (
+from fraud_detection.contract import load_admission_rules
+from fraud_detection.features.features import (
     WINDOW_1H_SECONDS,
     WINDOW_24H_SECONDS,
     build_sql,
@@ -24,6 +14,16 @@ from fraud_detection.orchestration.catalog import (
     FEATURE_PLATFORM,
 )
 from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import (
+    CARD_ENTITY_COLUMN,
+    CLIENT_ENTITY_COLUMN,
+    DEVICE_ENTITY_COLUMN,
+    FEATURE_TABLE,
+    FEATURES_DATASET,
+    JOINED_TABLE,
+    RAW_DATASET,
+    qualified,
+)
 
 
 @asset(

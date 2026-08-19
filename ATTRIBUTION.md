@@ -30,7 +30,7 @@ groupings are **human judgement read off correlation heatmaps and are taken as g
 re-derived.**
 
 **What is this repository's:** everything downstream. Selecting a representative per group
-([`evaluation/redundancy.py`](src/fraud_detection/evaluation/redundancy.py)), and — more to
+([`analysis/R/redundancy.R`](analysis/R/redundancy.R)), and — more to
 the point — `audit_partition`, which asks whether each group is more tightly bound inside
 than to its neighbours. That audit scores the borrowed partition at **0.78 over 93
 measurable groups**, and the number is recorded in the feature contract. Using someone
@@ -52,7 +52,7 @@ entity's past and never its future — see [docs/point-in-time.md](docs/point-in
 That is a different feature with the same name, and the difference is most of the gap
 between this project's score and the published one.
 
-Implementation: [`feature_engineering/features.py`](src/fraud_detection/feature_engineering/features.py),
+Implementation: [`features/features.py`](src/fraud_detection/features/features.py),
 `build_uid_aggregate_sql`.
 
 ## Konstantin Yakovlev
@@ -76,7 +76,7 @@ That is not a disagreement with the source. Yakovlev used `Dxn` as a *component 
 where being calendar-anchored is the point, not as a model feature. This repository uses it
 the same way and additionally measured what happens if you do the other thing.
 
-Implementation: [`feature_engineering/derivations.py`](src/fraud_detection/feature_engineering/derivations.py),
+Implementation: [`feature_engineering/derivations.py`](src/fraud_detection/features/derivations.py),
 `days_since_to_start_day`.
 
 ### "IEEE — Basic FE Part 1"
@@ -98,8 +98,8 @@ a category with how often it occurs.
 - an unseen value encodes as **null, not zero**, because zero would assert the value occurs
   zero times, which is false in the row being scored.
 
-Implementation: [`feature_engineering/derivations.py`](src/fraud_detection/feature_engineering/derivations.py),
-`frequency_encode`, and [`cli/build_frequency_maps.py`](src/fraud_detection/cli/build_frequency_maps.py).
+Implementation: [`feature_engineering/derivations.py`](src/fraud_detection/features/derivations.py),
+`frequency_encode`, and [`cli/build_frequency_maps.py`](src/fraud_detection/tools/frequency_maps.py).
 
 ## FraudSquad — 1st place solution
 
@@ -135,7 +135,7 @@ inheritance:
 
 - the **feature contract** — audits producing fragments that merge into one committed,
   fingerprinted artefact, with the fingerprint checked at scoring time;
-- the **six audits** and, in particular, that each carries its own reproducibility score, so
+- the **audits stated as statistics rather than as models**, each carrying its own reproducibility score, so
   a check that does not reproduce is visible as such;
 - **point-in-time enforcement** as a tested property rather than an intention;
 - the **promotion gate** and its five checks;

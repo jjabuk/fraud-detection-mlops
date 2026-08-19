@@ -6,8 +6,7 @@ import os
 from dagster import AssetIn, AssetKey, AutomationCondition, Failure, MaterializeResult, asset
 from google.cloud import storage
 
-from fraud_detection.core.config import get_orchestration_params
-from fraud_detection.core.provenance import UNKNOWN_SHA
+from fraud_detection.config import get_orchestration_params
 from fraud_detection.orchestration.catalog import (
     CODE_VERSION,
     MODEL_FACTORY,
@@ -20,6 +19,7 @@ from fraud_detection.orchestration.gate_checks import (
     unseen_segment_pr_auc,
 )
 from fraud_detection.orchestration.resources import BigQueryResource, ModelArtifactStore
+from fraud_detection.registry.provenance import UNKNOWN_SHA
 from fraud_detection.training.threshold import DEFAULT_FALSE_POSITIVE_BUDGET
 
 _gate_cfg = get_orchestration_params("gate")

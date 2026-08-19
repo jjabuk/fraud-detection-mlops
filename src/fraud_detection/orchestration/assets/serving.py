@@ -5,20 +5,20 @@ import pickle
 from dagster import AutomationCondition, Failure, asset
 from google.cloud import storage
 
-from fraud_detection.core.config import get_orchestration_params
-from fraud_detection.core.promotion import (
-    PromotedModel,
-    PromotionError,
-    assert_marker_is_current,
-    parse_promotion_marker,
-    split_gcs_uri,
-)
+from fraud_detection.config import get_orchestration_params
 from fraud_detection.orchestration.catalog import (
     CODE_VERSION,
     GCS,
     INFERENCE,
 )
 from fraud_detection.orchestration.resources import BigQueryResource, ModelArtifactStore
+from fraud_detection.registry.promotion import (
+    PromotedModel,
+    PromotionError,
+    assert_marker_is_current,
+    parse_promotion_marker,
+    split_gcs_uri,
+)
 
 PROMOTION_MARKER_PATH = get_orchestration_params("gate")["promotion_marker_path"]
 

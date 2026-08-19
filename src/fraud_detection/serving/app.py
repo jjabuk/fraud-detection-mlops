@@ -82,7 +82,7 @@ def load_model() -> dict[str, Any]:
 
     from google.cloud import storage
 
-    from fraud_detection.core.promotion import split_gcs_uri
+    from fraud_detection.registry.promotion import split_gcs_uri
 
     bucket_name, prefix = split_gcs_uri(f"{STORAGE_URI.rstrip('/')}/model.pkl")
     client = storage.Client()

@@ -1,0 +1,146 @@
+---
+title: "Does a column work inside every segment?"
+subtitle: "Simpson's paradox, with the two tests that were built for it"
+format:
+  html:
+    toc: true
+    code-fold: true
+    df-print: paged
+    embed-resources: true
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| include: false
+suppressPackageStartupMessages({
+  library(arrow); library(data.table); library(dplyr); library(pROC); library(Hmisc)
+  library(DescTools); library(jsonlite); library(ggplot2)
+})
+invisible(lapply(list.files("../R", full.names = TRUE, pattern = "[.]R$"), source))
+PARQUET <- Sys.getenv("FRAUDAUDIT_PARQUET",
+  "../../data/local/cache/audit_frame.parquet")
+win <- load_windows(PARQUET)
+```
+
+## The failure being looked for
+
+A column can separate fraud beautifully across the whole table and separate
+nothing at all inside every product segment. When that happens the column is not
+predicting fraud; it is predicting *which segment the row is in*, and the
+segments have different base rates.
+
+A model built on such a column inherits the segment mix of its training period.
+The day the mix moves, the column stops working — and nothing in the column
+itself will have drifted to warn anyone. It is a failure mode with no drift
+signature, which is why it needs its own audit rather than a monitor.
+
+Comparing a pooled AUC with a within-segment AUC and reading the gap against a
+threshold gets the right quantity and stops short of testing it.
+
+## The two tests that were built for exactly this
+
+**Cochran–Mantel–Haenszel** asks whether the association survives holding the
+segment fixed. It is the direct test of "is this column predicting fraud, or
+predicting the segment".
+
+**Breslow–Day** asks whether the association is the *same* in every segment. It
+catches the column that predicts in opposite directions in two segments and nets
+out to something respectable when pooled.
+
+Both need a binary exposure, and the honest dichotomy is the one the data draws:
+bins whose weight of evidence is positive carry above-average fraud odds. Cutting
+at the median would split on population rather than on risk.
+
+```{r scan}
+#| cache: true
+report <- segment_qualification_scan(win, segment_column = SQ_POLICY$segment_column,
+                                     bins = SQ_POLICY$bins, verbose = FALSE)
+segment_sizes <- sort(table(win$train$ProductCD), decreasing = TRUE)
+dominant_share <- sprintf("%.0f%%", 100 * max(segment_sizes) / sum(segment_sizes))
+data.table(segment = names(segment_sizes), rows = as.integer(segment_sizes),
+           share = sprintf("%.0f%%", 100 * as.integer(segment_sizes) / sum(segment_sizes)))
+```
+
+`W` carries `r dominant_share` of
+the traffic. A column that fails there fails for most of what the model will
+ever see, and a pooled metric is mostly a statement about that segment anyway.
+
+## The finding
+
+```{r findings}
+data.table(
+  finding = c("flagged as a segment artefact",
+              "of which: a constant inside the dominant segment",
+              "heterogeneous odds ratio (Breslow-Day)"),
+  columns = c(sum(report$segment_artefact, na.rm = TRUE),
+              sum(!report$measurable_in_dominant & report$pooled_auc > 0.55, na.rm = TRUE),
+              sum(report$heterogeneous, na.rm = TRUE))
+)
+```
+
+```{r unmeasurable}
+report[!measurable_in_dominant & pooled_auc > 0.55][order(-pooled_auc)][1:10,
+  .(column, pooled_auc = round(pooled_auc, 3), dominant_segment,
+    segments_measurable, of = segments_total, cmh_or = round(cmh_or, 2))]
+```
+
+```{r worst}
+#| include: false
+worst_pooled <- round(max(report[measurable_in_dominant == FALSE]$pooled_auc, na.rm = TRUE), 2)
+```
+
+These columns reach a pooled AUC as high as
+`r worst_pooled` and are
+**constants** inside the segment holding most of the traffic. Their apparent
+predictiveness is substantially the statement "this row is not product W".
+
+An unmeasurable dominant segment is a result, not missing data, and the report
+records it as one. Treating it as a gap would drop the single most important
+thing the audit found.
+
+```{r plot}
+#| fig-width: 8
+#| fig-height: 5
+plot_data <- report[!is.na(pooled_auc)]
+plot_data[, status := fifelse(!measurable_in_dominant, "constant in dominant segment",
+                       fifelse(heterogeneous %in% TRUE, "heterogeneous across segments", "consistent"))]
+ggplot(plot_data, aes(pooled_auc, fifelse(is.na(dominant_auc), 0.5, dominant_auc), colour = status)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", linewidth = 0.3) +
+  geom_point(alpha = 0.75, size = 1.8) +
+  scale_colour_manual(values = c(`consistent` = "#1f4e79",
+                                 `heterogeneous across segments` = "#2e7d5b",
+                                 `constant in dominant segment` = "#c1440e")) +
+  labs(x = "AUC, pooled", y = "AUC, dominant segment (0.5 where unmeasurable)",
+       colour = NULL, title = "Distance below the line is how much the pooled number overstates",
+       subtitle = "Red points are constants in the segment carrying most of the traffic") +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(), legend.position = "bottom")
+```
+
+## Heterogeneity is not a reason to drop a column
+
+```{r heterogeneous}
+report[heterogeneous %in% TRUE & measurable_in_dominant][order(-pooled_auc)][1:8,
+  .(column, pooled_auc = round(pooled_auc, 3), dominant_auc = round(dominant_auc, 3),
+    min_segment_auc = round(min_segment_auc, 3), max_segment_auc = round(max_segment_auc, 3),
+    bd_p = signif(bd_p_bh, 2))]
+```
+
+A column whose odds ratio differs between segments is still informative. What it
+is not is *summarisable by one number* — and the response is to stop reading its
+pooled figure, or to let the model interact it with the segment, not to throw it
+away.
+
+## Recorded, not applied
+
+```{r fragment}
+fragment <- segment_qualification_fragment(report, reject = SQ_POLICY$reject, params = SQ_POLICY)
+write_fragment(fragment, report, dir = "../out")
+str(fragment$qualification)
+```
+
+The fragment rejects nothing, and that is measured rather than cautious:
+applying these verdicts cost 0.0325 PR-AUC and moved the segment they were
+protecting by 0.0005. The finding survives in the contract without the cost.

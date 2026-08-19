@@ -1,10 +1,8 @@
 from fraud_detection.orchestration.assets.baseline import bqml_baseline
 from fraud_detection.orchestration.assets.explainability import model_explanations
 from fraud_detection.orchestration.assets.feature_audit import (
-    distribution_shift_report,
+    audit_frame,
     feature_contract,
-    redundancy_report,
-    time_consistency_report,
 )
 from fraud_detection.orchestration.assets.feature_contract_check import (
     feature_contract_freshness,
@@ -32,11 +30,12 @@ from fraud_detection.orchestration.assets.splits import split_assignment
 from fraud_detection.orchestration.assets.training import lightgbm_model
 
 __all__ = [
+    # Feature validation
+    "audit_frame",
     # Serving
     "best_model",
     # Model training
     "bqml_baseline",
-    "distribution_shift_report",
     "feature_contract",
     # Feature contract checks
     "feature_contract_freshness",
@@ -57,11 +56,9 @@ __all__ = [
     "raw_transaction_kaggle_to_gcs",
     # Data ingestion
     "raw_transactions_bigquery",
-    "redundancy_report",
     # Splits
     "split_assignment",
     # Feature audits
-    "time_consistency_report",
     # Feature engineering
     "transaction_features",
     "validation_gate",

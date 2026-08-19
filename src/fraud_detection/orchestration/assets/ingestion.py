@@ -7,13 +7,6 @@ import polars as pl
 from dagster import AssetCheckResult, AssetCheckSpec, AssetKey, Failure, Output, asset
 from google.cloud import bigquery, storage
 
-from fraud_detection.core.schema import (
-    RAW_DATASET,
-    RAW_IDENTITY_TABLE,
-    RAW_TEST_IDENTITY_TABLE,
-    RAW_TEST_TRANSACTION_TABLE,
-    RAW_TRANSACTION_TABLE,
-)
 from fraud_detection.orchestration.catalog import (
     BIGQUERY,
     CODE_VERSION,
@@ -35,6 +28,13 @@ from fraud_detection.orchestration.resources import (
     BigQueryResource,
     IdentityRawCsvSourceResource,
     RawCsvSourceResource,
+)
+from fraud_detection.schema import (
+    RAW_DATASET,
+    RAW_IDENTITY_TABLE,
+    RAW_TEST_IDENTITY_TABLE,
+    RAW_TEST_TRANSACTION_TABLE,
+    RAW_TRANSACTION_TABLE,
 )
 
 REQUIRED_COLUMNS = ["TransactionID", "TransactionDT", "TransactionAmt"]

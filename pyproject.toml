@@ -45,9 +45,11 @@ dev = [
 data = ["kagglehub>=0.3"]
 
 [project.scripts]
-score-batch = "fraud_detection.cli.score_batch:main"
-noise-band = "fraud_detection.cli.noise_band:main"
-build-frequency-maps = "fraud_detection.cli.build_frequency_maps:main"
+score-batch = "fraud_detection.serving.batch:main"
+stamp-contract = "fraud_detection.contract.stamp:main"
+export-audit-frame = "fraud_detection.contract.export_frame:main"
+noise-band = "fraud_detection.tools.noise_band:main"
+build-frequency-maps = "fraud_detection.tools.frequency_maps:main"
 
 [build-system]
 requires = ["hatchling"]

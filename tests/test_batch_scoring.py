@@ -23,14 +23,7 @@ from dagster import build_asset_context
 from google.cloud import bigquery
 
 import fraud_detection.orchestration.resources as resources_module
-from fraud_detection.core.schema import (
-    JOINED_TABLE,
-    ORIGIN_COLUMN,
-    SCORING_HISTORY_TABLE,
-    TEST_JOINED_TABLE,
-    TEST_MODEL_INPUT_TABLE,
-)
-from fraud_detection.feature_engineering.scoring_history import (
+from fraud_detection.features.scoring_history import (
     align_to_training_schema,
     build_scoring_history_sql,
 )
@@ -39,6 +32,13 @@ from fraud_detection.orchestration.assets.inference import (
     scoring_history,
 )
 from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import (
+    JOINED_TABLE,
+    ORIGIN_COLUMN,
+    SCORING_HISTORY_TABLE,
+    TEST_JOINED_TABLE,
+    TEST_MODEL_INPUT_TABLE,
+)
 
 TRAIN_SCHEMA = [
     bigquery.SchemaField("TransactionID", "INT64"),

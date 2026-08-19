@@ -1,0 +1,2524 @@
+{
+  "version": "1",
+  "created_at": "2026-08-19T10:48:38+0200",
+  "data": {
+    "table": "features.model_input",
+    "rows": 200785,
+    "windows": {
+      "train": [0, 0.17],
+      "holdout": [0.83, 1]
+    }
+  },
+  "columns": [
+    {
+      "name": "TransactionAmt",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "ProductCD",
+      "source": "request",
+      "dtype": "str"
+    },
+    {
+      "name": "card1",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "card2",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "card3",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "card4",
+      "source": "request",
+      "dtype": "str"
+    },
+    {
+      "name": "card5",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "card6",
+      "source": "request",
+      "dtype": "str"
+    },
+    {
+      "name": "addr1",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "addr2",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "dist1",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "dist2",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "P_emaildomain",
+      "source": "request",
+      "dtype": "str"
+    },
+    {
+      "name": "R_emaildomain",
+      "source": "request",
+      "dtype": "str"
+    },
+    {
+      "name": "C1",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C2",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C3",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C4",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C5",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C6",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C7",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C8",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C9",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C10",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C11",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C12",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C13",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "C14",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D1",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D2",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D3",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D4",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D5",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D6",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D7",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D8",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "D9",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "D10",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D11",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D12",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D13",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D14",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "D15",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "M1",
+      "source": "request",
+      "dtype": "bool"
+    },
+    {
+      "name": "M2",
+      "source": "request",
+      "dtype": "bool"
+    },
+    {
+      "name": "M3",
+      "source": "request",
+      "dtype": "bool"
+    },
+    {
+      "name": "M4",
+      "source": "request",
+      "dtype": "str"
+    },
+    {
+      "name": "M5",
+      "source": "request",
+      "dtype": "bool"
+    },
+    {
+      "name": "M6",
+      "source": "request",
+      "dtype": "bool"
+    },
+    {
+      "name": "M7",
+      "source": "request",
+      "dtype": "bool"
+    },
+    {
+      "name": "M8",
+      "source": "request",
+      "dtype": "bool"
+    },
+    {
+      "name": "M9",
+      "source": "request",
+      "dtype": "bool"
+    },
+    {
+      "name": "V1",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V2",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V3",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V4",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V5",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V6",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V7",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V8",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V9",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V10",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V11",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V12",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V13",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V14",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V15",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V16",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V17",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V18",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V19",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V20",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V21",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V22",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V23",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V24",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V25",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V26",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V27",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V28",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V29",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V30",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V31",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V32",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V33",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V34",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V35",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V36",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V37",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V38",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V39",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V40",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V41",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V42",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V43",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V44",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V45",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V46",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V47",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V48",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V49",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V50",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V51",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V52",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V53",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V54",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V55",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V56",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V57",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V58",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V59",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V60",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V61",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V62",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V63",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V64",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V65",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V66",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V67",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V68",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V69",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V70",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V71",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V72",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V73",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V74",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V75",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V76",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V77",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V78",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V79",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V80",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V81",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V82",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V83",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V84",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V85",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V86",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V87",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V88",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V89",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V90",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V91",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V92",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V93",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V94",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V95",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V96",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V97",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V98",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V99",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V100",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V101",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V102",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V103",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V104",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V105",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V106",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V107",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V108",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V109",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V110",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V111",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V112",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V113",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V114",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V115",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V116",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V117",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V118",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V119",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V120",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V121",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V122",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V123",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V124",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V125",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V126",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V127",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V128",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V129",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V130",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V131",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V132",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V133",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V134",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V135",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V136",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V137",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V138",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V139",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V140",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V141",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V142",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V143",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V144",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V145",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V146",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V147",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V148",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V149",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V150",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V151",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V152",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V153",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V154",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V155",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V156",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V157",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V158",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V159",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V160",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V161",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V162",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V163",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V164",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V165",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V166",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V167",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V168",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V169",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V170",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V171",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V172",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V173",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V174",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V175",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V176",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V177",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V178",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V179",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V180",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V181",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V182",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V183",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V184",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V185",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V186",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V187",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V188",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V189",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V190",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V191",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V192",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V193",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V194",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V195",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V196",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V197",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V198",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V199",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V200",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V201",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V202",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V203",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V204",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V205",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V206",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V207",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V208",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V209",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V210",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V211",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V212",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V213",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V214",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V215",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V216",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V217",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V218",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V219",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V220",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V221",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V222",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V223",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V224",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V225",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V226",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V227",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V228",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V229",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V230",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V231",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V232",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V233",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V234",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V235",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V236",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V237",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V238",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V239",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V240",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V241",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V242",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V243",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V244",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V245",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V246",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V247",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V248",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V249",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V250",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V251",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V252",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V253",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V254",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V255",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V256",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V257",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V258",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V259",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V260",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V261",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V262",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V263",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V264",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V265",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V266",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V267",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V268",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V269",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V270",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V271",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V272",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V273",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V274",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V275",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V276",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V277",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V278",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V279",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V280",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V281",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V282",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V283",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V284",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V285",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V286",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V287",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V288",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V289",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V290",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V291",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V292",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V293",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V294",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V295",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V296",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V297",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V298",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V299",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V300",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V301",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V302",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V303",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V304",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V305",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V306",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V307",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V308",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V309",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V310",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V311",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V312",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V313",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V314",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V315",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V316",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V317",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V318",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V319",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V320",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V321",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V322",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V323",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V324",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V325",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V326",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V327",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V328",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V329",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V330",
+      "source": "request",
+      "dtype": "int"
+    },
+    {
+      "name": "V331",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V332",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V333",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V334",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V335",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V336",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V337",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V338",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "V339",
+      "source": "request",
+      "dtype": "float"
+    },
+    {
+      "name": "id_01",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_02",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_03",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_04",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_05",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_06",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_07",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_08",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_09",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_10",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_11",
+      "source": "retrieved",
+      "dtype": "float"
+    },
+    {
+      "name": "id_12",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_13",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_14",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_15",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_16",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_17",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_18",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_19",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_20",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_21",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_22",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_23",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_24",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_25",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_26",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_27",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_28",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_29",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_30",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_31",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_32",
+      "source": "retrieved",
+      "dtype": "int"
+    },
+    {
+      "name": "id_33",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_34",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "id_35",
+      "source": "retrieved",
+      "dtype": "bool"
+    },
+    {
+      "name": "id_36",
+      "source": "retrieved",
+      "dtype": "bool"
+    },
+    {
+      "name": "id_37",
+      "source": "retrieved",
+      "dtype": "bool"
+    },
+    {
+      "name": "id_38",
+      "source": "retrieved",
+      "dtype": "bool"
+    },
+    {
+      "name": "DeviceType",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "DeviceInfo",
+      "source": "retrieved",
+      "dtype": "str"
+    },
+    {
+      "name": "null_count_V_block",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card_txn_count_1h",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card_txn_count_24h",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card_txn_amt_avg_24h",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "card_txn_amt_sum_24h",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "card_amt_deviation_24h",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "seconds_since_prev_txn_card",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "device_txn_count_24h",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "client_txn_count_prior",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "client_txn_count_24h",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "client_amt_avg_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_amt_deviation_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "seconds_since_prev_txn_client",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "client_d2n_std_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_d3n_std_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_d5n_std_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_d10n_std_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_d11n_std_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_d15n_std_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c1_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c2_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c3_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c4_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c5_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c6_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c7_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c8_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c9_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c10_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c11_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c12_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c13_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_c14_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_m1_mean_prior",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "client_m2_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_m3_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_m5_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_m6_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_m7_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_m8_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "client_m9_mean_prior",
+      "source": "derived",
+      "dtype": "float"
+    },
+    {
+      "name": "D1n",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "D2n",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "D3n",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "D5n",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "D10n",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "D11n",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "D15n",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "ProductCD_is_W",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "ProductCD_is_C",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "ProductCD_is_R",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "ProductCD_is_H",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "ProductCD_is_S",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card4_is_visa",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card4_is_mastercard",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card4_is_american_express",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card4_is_discover",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card6_is_debit",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card6_is_credit",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card6_is_debit_or_credit",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "card6_is_charge_card",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "M4_is_M0",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "M4_is_M1",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "M4_is_M2",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "DeviceType_is_desktop",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "DeviceType_is_mobile",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "addr1_freq",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "P_emaildomain_freq",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "R_emaildomain_freq",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "DeviceInfo_freq",
+      "source": "derived",
+      "dtype": "int"
+    },
+    {
+      "name": "id_31_freq",
+      "source": "derived",
+      "dtype": "int"
+    }
+  ]
+}
