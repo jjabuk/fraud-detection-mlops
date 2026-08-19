@@ -54,7 +54,7 @@ jobs:
             ${{ env.IMAGE }}:latest
           # Baked into the image so a container can report the commit it was built from --
           # every model it trains and every row it scores carries this value. See
-          # src/fraud_detection/core/provenance.py.
+          # src/fraud_detection/registry/provenance.py.
           build-args: |
             GIT_SHA=${{ github.sha }}
           # SLSA provenance and an SBOM, attached to the pushed manifest as OCI referrers
