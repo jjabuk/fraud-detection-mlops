@@ -30,12 +30,21 @@ groupings are **human judgement read off correlation heatmaps and are taken as g
 re-derived.**
 
 **What is this repository's:** everything downstream. Selecting a representative per group
-([`analysis/R/redundancy.R`](analysis/R/redundancy.R)), and — more to
-the point — `audit_partition`, which asks whether each group is more tightly bound inside
-than to its neighbours. That audit scores the borrowed partition at **0.78 over 93
-measurable groups**, and the number is recorded in the feature contract. Using someone
-else's grouping without checking whether it holds on your data would be the borrowing this
-file is meant to prevent.
+([`analysis/R/redundancy.R`](analysis/R/redundancy.R)), and — more to the point —
+`audit_pinned_blocks`, which asks whether each block is more tightly bound inside than to
+its neighbours, measured as mean shared variance (Spearman ρ²) within against between.
+
+The borrowed partition **holds: 21 of 21 blocks are tighter inside than out**, by a mean
+factor of 14.6, and the weakest — `V302-V321` — is still 4.3× tighter. Per-block figures
+are committed in
+[`analysis/out/tables/pinned_blocks.csv`](analysis/out/tables/pinned_blocks.csv). Using
+someone else's grouping without checking whether it holds on your data would be the
+borrowing this file is meant to prevent, and a check nobody can look up is not a check.
+
+The ID half of that source was transcribed too, into
+[`references/column-groups-id.json`](references/column-groups-id.json), and **nothing
+consumes it** — which the `references/` index says plainly rather than leaving it to look
+load-bearing.
 
 ### "XGB Fraud with Magic — [0.9600]"
 <https://www.kaggle.com/code/cdeotte/xgb-fraud-with-magic-0-9600>
@@ -76,7 +85,7 @@ That is not a disagreement with the source. Yakovlev used `Dxn` as a *component 
 where being calendar-anchored is the point, not as a model feature. This repository uses it
 the same way and additionally measured what happens if you do the other thing.
 
-Implementation: [`feature_engineering/derivations.py`](src/fraud_detection/features/derivations.py),
+Implementation: [`features/derivations.py`](src/fraud_detection/features/derivations.py),
 `days_since_to_start_day`.
 
 ### "IEEE — Basic FE Part 1"
@@ -98,8 +107,8 @@ a category with how often it occurs.
 - an unseen value encodes as **null, not zero**, because zero would assert the value occurs
   zero times, which is false in the row being scored.
 
-Implementation: [`feature_engineering/derivations.py`](src/fraud_detection/features/derivations.py),
-`frequency_encode`, and [`cli/build_frequency_maps.py`](src/fraud_detection/tools/frequency_maps.py).
+Implementation: [`features/derivations.py`](src/fraud_detection/features/derivations.py),
+`frequency_encode`, and [`tools/frequency_maps.py`](src/fraud_detection/tools/frequency_maps.py).
 
 ## FraudSquad — 1st place solution
 
@@ -124,9 +133,24 @@ repository** and must be fetched under the competition's own terms.
 ## Standard techniques, used without attribution to any individual
 
 These are textbook or widely-published methods with no single owner, implemented from the
-definition rather than from anyone's code: population stability index, adversarial
-validation, isotonic and Platt calibration, precision-recall and ROC analysis, stratified
-cross-validation, SHAP.
+definition rather than from anyone's code.
+
+On the audit side: weight of evidence and information value, the population stability
+index, Somers' D, DeLong's variance estimator for the area under an ROC curve, the
+Benjamini–Hochberg correction, the energy two-sample test, Anderson–Darling and
+Cramér–von Mises, Cramér's V with Bergsma's correction, hierarchical variable clustering,
+redundancy analysis on restricted cubic splines, Horn's parallel analysis, tetrachoric
+correlation, Cochran–Mantel–Haenszel and Breslow–Day, Little's MCAR test, Benford's law,
+the Clauset–Shalizi–Newman power-law fit, Bai–Perron structural breaks, Rayleigh's test
+for circular uniformity, and the Gini and Herfindahl–Hirschman concentration indices.
+
+On the modelling side: isotonic and Platt calibration, precision-recall and ROC analysis,
+stratified cross-validation, SHAP.
+
+Adversarial validation is *not* in that list, and its absence is deliberate: the question
+it answers — are these two periods distinguishable at all — is answered here by a
+two-sample test, which returns a p-value against a null distribution rather than an AUC
+against a convention.
 
 ## What is original here
 
@@ -135,8 +159,12 @@ inheritance:
 
 - the **feature contract** — audits producing fragments that merge into one committed,
   fingerprinted artefact, with the fingerprint checked at scoring time;
-- the **audits stated as statistics rather than as models**, each carrying its own reproducibility score, so
-  a check that does not reproduce is visible as such;
+- the **audits stated as statistics rather than as models** — a rank statistic with a
+  confidence interval, a weight-of-evidence table, a permutation test — each rejection
+  needing both significance after a family-wide correction and a stated effect size;
+- **the null distributions the conventional thresholds leave out**: PSI measured against
+  what it reaches when nothing has moved, entity purity against a permuted null that keeps
+  the group sizes;
 - **point-in-time enforcement** as a tested property rather than an intention;
 - the **promotion gate** and its five checks;
 - the **noise-band measurement** and the discipline built on it;

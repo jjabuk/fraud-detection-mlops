@@ -29,8 +29,7 @@ jobs:
       - name: Run ruff
         run: uv run ruff check .
 
-      # Plain `pytest`. This used to swallow exit code 5 -- "no tests collected" -- from a
-      # time when there were none. There are 290, and a run that suddenly collects zero is
+      # Plain `pytest`. There are 200+, and a run that suddenly collects zero is
       # now the most alarming thing this workflow could see, not something to wave through.
       - name: Run pytest
         run: uv run pytest

@@ -111,9 +111,14 @@ list(
       data.table::fwrite(missingness_report, "out/tables/missingness.csv")
       data.table::fwrite(dimensionality_report, "out/tables/dimensionality.csv")
       data.table::fwrite(entity_report, "out/tables/entity_keys.csv")
+      # The verdict on the *borrowed* partition. ATTRIBUTION.md claims the pinned
+      # V-block grouping was checked against this data rather than taken on trust,
+      # and a claim of that kind has to point at a committed number.
+      data.table::fwrite(block_audit, "out/tables/pinned_blocks.csv")
       c(
         "out/tables/categorical.csv", "out/tables/missingness.csv",
-        "out/tables/dimensionality.csv", "out/tables/entity_keys.csv"
+        "out/tables/dimensionality.csv", "out/tables/entity_keys.csv",
+        "out/tables/pinned_blocks.csv"
       )
     },
     format = "file"

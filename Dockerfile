@@ -95,7 +95,7 @@ ENV PATH="/app/.venv/bin:${PATH}"
 # here, after the expensive layers, because it changes on every commit and anything above
 # it would be rebuilt from scratch each time. Defaults to empty: an unstamped local build
 # reports `unknown` rather than lying about which commit it is.
-# See src/fraud_detection/core/provenance.py.
+# See src/fraud_detection/registry/provenance.py.
 ARG GIT_SHA=""
 ENV GIT_SHA=${GIT_SHA}
 
