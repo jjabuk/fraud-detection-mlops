@@ -17,7 +17,7 @@ Read this before any comparison below.
 | PR-AUC | 0.0065 | 0.0092 |
 
 Five seeds, same configuration, nothing moving but the LightGBM seed
-([`uv run noise-band`](../src/fraud_detection/cli/noise_band.py)). The dominant source is
+([`uv run noise-band`](../src/fraud_detection/tools/noise_band.py)). The dominant source is
 early stopping: `best_iteration` ranged over 431–1581 across the five runs.
 
 Transfer to the leaderboard adds a second, larger source of noise. Three submissions:
@@ -169,6 +169,14 @@ each carrying its own reproducibility evidence:
 
 | Audit | Rejects | Reproducibility | Reading |
 | --- | ---: | --- | --- |
+> **These numbers are from the Python implementation, superseded on 2026-08-19.** The
+> audits are now statistics rather than models and live in [`analysis/`](../analysis/README.md);
+> the current figures are in `analysis/out/tables/` and in the rendered reports. The table
+> below is kept because the migration was validated against it — 96.0% verdict agreement,
+> median absolute AUC difference 0.0014 — and a measurement that was replaced is more
+> informative than one that was quietly overwritten. What changed, and what the new
+> statistics found that these could not, is in [DECISIONS.md](../DECISIONS.md).
+
 | distribution_shift | 46 | 1.00 at doubled bin count | strongest |
 | redundancy | 210 | 0.78 over 93 measurable groups | sound |
 | time_consistency | 134 | 0.32 at a 1.5× wider window | weakest, and it rejects the most |

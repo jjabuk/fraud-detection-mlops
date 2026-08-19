@@ -25,7 +25,7 @@ hand:
 
 | Job | Scope | Graph |
 | --- | --- | --- |
-| `feature_platform_job` | Raw CSV to a committed feature contract, with the audits behind it | ![feature_platform_job](img/feature_platform_job.svg) |
+| `feature_platform_job` | Raw CSV to `model_input`, then the check that the committed contract is current | ![feature_platform_job](img/feature_platform_job.svg) |
 | `model_factory_job` | Splits, baseline, training, explanations, promotion gate | ![model_factory_job](img/model_factory_job.svg) |
 | `inference_job` | The scoring path, run to completion by a Cloud Run Job | ![inference_job](img/inference_job.svg) |
 
@@ -46,7 +46,7 @@ group.
 | --- | ---: | --- | --- |
 | `raw_ingestion` | 7 | feature_platform | Kaggle staging, CSV to BigQuery under a pinned schema, the join |
 | `feature_store` | 2 | feature_platform | The point-in-time feature SQL and `model_input` |
-| `feature_audit` | 4 | feature_platform | The three audit reports and the contract they merge into |
+| `feature_validation` | 2 | feature_platform | Exports the frame the audits read, and reads back the stamped contract, refusing a stale, short or hand-edited one. The audits themselves are statistics and run in [`analysis/`](../analysis/README.md), outside this graph. |
 | `dataset_preparation` | 1 | model_factory | The time-based split assignment |
 | `model_training` | 2 | model_factory | The BQML baseline and the LightGBM model |
 | `model_registry` | 2 | model_factory | Explanations and the promotion gate |
@@ -113,7 +113,7 @@ orchestrator's memory.
 ## 6. Metadata
 
 Materializations carry row counts, the contract fingerprint, the code version, artifact and
-plot URIs, and for the audits, how far each check's verdicts reproduce.
+plot URIs, and for the contract, which statistic stood behind each rejection.
 
 The one that earns its place is on `feature_contract`: `admitted`, `rejected`, `overridden` and
 the fingerprint, so the catalog answers what changed about the feature set and when without
