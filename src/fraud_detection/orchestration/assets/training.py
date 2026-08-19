@@ -18,21 +18,15 @@ from dagster import (
 )
 from google.cloud import storage
 
-from fraud_detection.core.config import get_training_params
-from fraud_detection.core.feature_contract import (
+from fraud_detection.config import get_training_params
+from fraud_detection.contract import (
     ContractError,
     FeatureContract,
     assert_model_features_admitted,
     load_admission_rules,
 )
-from fraud_detection.core.provenance import describe_code_version
-from fraud_detection.core.schema import (
-    CLIENT_ENTITY_ANCHOR,
-    CLIENT_ENTITY_COMPONENTS,
-    MODEL_INPUT_TABLE,
-)
-from fraud_detection.evaluation.entity_purity import Anchor, EntityKey, seen_entity_flag
-from fraud_detection.feature_engineering.derivations import DerivationError
+from fraud_detection.features.derivations import DerivationError
+from fraud_detection.features.entity import seen_entity_flag
 from fraud_detection.orchestration.assets.baseline import build_run_suffix
 from fraud_detection.orchestration.assets.feature_audit import CONTRACT_FILE
 from fraud_detection.orchestration.catalog import (
@@ -44,6 +38,10 @@ from fraud_detection.orchestration.resources import (
     BigQueryResource,
     ExperimentTracker,
     ModelArtifactStore,
+)
+from fraud_detection.registry.provenance import describe_code_version
+from fraud_detection.schema import (
+    MODEL_INPUT_TABLE,
 )
 from fraud_detection.training import plots
 from fraud_detection.training.data import load_raw_split, split_with_contract
@@ -192,15 +190,11 @@ def lightgbm_model(
     # Same constants the feature SQL and the contract's `entity` block are built from, so
     # the cold-entity segment the gate is judged on cannot describe a different client
     # than the one the features were computed for.
-    client_key = EntityKey(
-        columns=CLIENT_ENTITY_COMPONENTS, anchors=(Anchor(CLIENT_ENTITY_ANCHOR),)
-    )
-
-    # `seen_entity_flag` returns a polars Series whose missing values are nulls, not NaN.
-    # A row with no reconstructable client is "not seen in training", which is what the
-    # gate's cold-entity segment asks about.
+    # The entity key is a column, computed once by the feature-engineering statement
+    # and carried into `model_input`. Rebuilding it here would be a second
+    # implementation of an identifier the warehouse already has.
     def seen(holdout) -> pl.Series:
-        return seen_entity_flag(train_raw, holdout, client_key).fill_null(False).cast(pl.Boolean)
+        return seen_entity_flag(train_raw, holdout).fill_null(False).cast(pl.Boolean)
 
     train_seen, val_seen, test_seen = seen(train_raw), seen(val_raw), seen(test_raw)
 

@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from dagster import AssetKey, AutomationCondition, Failure, Output, asset
 
-from fraud_detection.core.schema import (
+from fraud_detection.orchestration.catalog import (
+    BIGQUERY,
+    CODE_VERSION,
+    FEATURE_PLATFORM,
+)
+from fraud_detection.orchestration.resources import BigQueryResource
+from fraud_detection.schema import (
+    CLIENT_ENTITY_COLUMN,
     FEATURE_COLUMNS,
     FEATURE_TABLE,
     FEATURES_DATASET,
@@ -12,12 +19,6 @@ from fraud_detection.core.schema import (
     qualified,
     uid_aggregate_feature_columns,
 )
-from fraud_detection.orchestration.catalog import (
-    BIGQUERY,
-    CODE_VERSION,
-    FEATURE_PLATFORM,
-)
-from fraud_detection.orchestration.resources import BigQueryResource
 
 # Assembled from two tables on purpose. A transaction arriving at /predict has
 # never been seen before, so its own V*/id_* values cannot be retrieved from
@@ -33,10 +34,22 @@ from fraud_detection.orchestration.resources import BigQueryResource
 # duplicate every one of them. Naming them also means a feature added upstream
 # without updating FEATURE_COLUMNS fails loudly here instead of silently
 # never reaching the model.
+#
+# `client_uid` is carried separately from the feature list, and the distinction is
+# the point: it is an entity key, not a feature. `schema.EXCLUDED_COLUMNS` keeps it
+# out of the contract's declaration so no audit can mistake it for one, and nothing
+# downstream may train on it -- 217,735 levels over 590,540 rows is a memorised
+# customer list, and every customer it memorised is one it can never meet again.
+#
+# It is carried because the split and the gate need it. The alternative is to
+# rebuild it in Python from card1, addr1 and D1, which is what used to happen: a
+# second implementation of an identifier this statement already computes, agreeing
+# with the first only for as long as nobody edits either.
 MODEL_INPUT_SQL = """
 CREATE OR REPLACE TABLE `{destination_table}` AS
 SELECT
   j.*,
+  f.{client_entity_column},
   {feature_columns}
 FROM `{joined_table}` AS j
 JOIN `{feature_table}` AS f
@@ -85,6 +98,7 @@ def model_input(
     destination_table = qualified(project, FEATURES_DATASET, MODEL_INPUT_TABLE)
 
     query = MODEL_INPUT_SQL.format(
+        client_entity_column=CLIENT_ENTITY_COLUMN,
         destination_table=destination_table,
         joined_table=joined_table,
         feature_table=feature_table,
