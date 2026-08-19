@@ -20,7 +20,12 @@ suppressPackageStartupMessages({
 })
 invisible(lapply(list.files("../R", full.names = TRUE, pattern = "[.]R$"), source))
 PARQUET <- Sys.getenv("FRAUDAUDIT_PARQUET", "../../data/local/cache/audit_frame.parquet")
-win <- load_windows(PARQUET, features = c("card1", "card2", "card3", "addr1", "D1", "TransactionDT"))
+# `client_uid` is asked for by name. It is in `EXCLUDED_COLUMNS`, so the default
+# feature set leaves it out -- correctly, since it is an entity key and not a
+# feature -- and without naming it here the check against the pipeline's own key
+# has nothing to compare with.
+win <- load_windows(PARQUET, features = c(
+  "card1", "card2", "card3", "addr1", "D1", "TransactionDT", "client_uid"))
 ```
 
 ## The problem
