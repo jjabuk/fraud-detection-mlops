@@ -34,14 +34,21 @@ jobs:
       - name: Run pytest
         run: uv run pytest
 
-      # The contract is committed, and so are the audit fragments it was stamped
-      # from. This re-stamps into memory and compares fingerprints, so a pull
-      # request that changes an audit without re-stamping fails here rather than
-      # shipping a contract that describes an older table. It needs neither R nor
-      # the dataset -- only the two committed artefacts -- which is why it lives
-      # in this job and costs nothing.
-      - name: Check the feature contract is current
-        run: uv run stamp-contract --check
+      # The contract is a vendored artefact now: it is produced in the audit repository
+      # (jjabuk/ieee-cis-fraud-detection-eda) and lands here as a reviewed file. This
+      # cannot re-stamp it -- the fragments it was stamped from live there -- so it checks
+      # the property that survives the split: `from_json` recomputes the hash over the
+      # contents and refuses a file whose stored fingerprint disagrees. That catches a
+      # hand-edited or truncated contract, which is the failure this side can actually have.
+      - name: Verify the vendored feature contract
+        run: |
+          uv run python -c "
+          from pathlib import Path
+          from fraud_detection.contract import CONTRACT_FILE, FeatureContract
+          contract = FeatureContract.from_json(Path(CONTRACT_FILE).read_text())
+          print(f'contract {contract.fingerprint()} verified, '
+                f'{len(contract.training_features())} admitted columns')
+          "
 
       # Audits the dependency set the *image* ships, which is the one an attacker can
       # reach: `--no-dev` because pytest and ruff never leave CI. Blocking on purpose. If a
@@ -140,55 +147,3 @@ jobs:
           name: sbom-${{ github.sha }}
           path: sbom.cyclonedx.json
           if-no-files-found: error
-
-  # The audits are R, and they are a separate toolchain on purpose: they depend on
-  # nothing in the Python environment, and Python depends on nothing here beyond one
-  # stamped JSON file. Running them as their own job keeps that true -- a failure
-  # names which half broke.
-  #
-  # No data, no credentials, no warehouse. Every test in analysis/ is synthetic, which
-  # is what lets the statistics be checked on a pull request instead of only on a
-  # machine that has the dataset.
-  audits:
-    name: Feature audits (R)
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: analysis
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      # The R version is pinned to the one in renv.lock. A lockfile records package
-      # versions and not the interpreter they were resolved against, so leaving this
-      # floating would let a new R release change results while the lockfile still
-      # claimed reproducibility.
-      - name: Setup R
-        uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: "4.5.1"
-          use-public-rspm: true
-
-      # `use-public-rspm` above and this override are the same decision seen from two
-      # sides: renv.lock records CRAN as its repository, which serves source tarballs,
-      # and building Hmisc, arrow and DescTools from source takes half an hour. P3M
-      # serves the same versions as Linux binaries. The lockfile still decides *which*
-      # versions; this only changes where they are fetched from.
-      - name: Restore the R library
-        uses: r-lib/actions/setup-renv@v2
-        with:
-          working-directory: analysis
-        env:
-          RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/__linux__/jammy/latest
-
-      - name: Run testthat
-        run: Rscript tests/run.R
-
-      # Loads `_targets.R` and reports what the graph would run without running it.
-      # Catches the failure a test suite cannot see: a target that references a
-      # function that no longer exists, or a policy key renamed on one side only.
-      - name: Validate the audit graph
-        run: Rscript -e 'targets::tar_manifest()'
-

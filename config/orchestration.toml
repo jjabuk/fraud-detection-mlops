@@ -53,6 +53,13 @@ dominant_segment_share = 0.50
 [feature_audit]
 partition_file = "references/column-groups-v.json"
 contract_file = "references/feature-contract.json"
+# The audits are a separate repository (jjabuk/ieee-cis-fraud-detection-eda). These are
+# the paths `stamp-contract` reads when re-stamping from a local clone of it; the default
+# assumes the two repositories sit side by side. Nothing in the pipeline reads them --
+# the pipeline reads `contract_file`, which is committed here as a reviewed artefact.
+audit_repo = "../ieee-cis-fraud-detection-eda"
+fragment_dir = "../ieee-cis-fraud-detection-eda/out/fragments"
+declaration_file = "../ieee-cis-fraud-detection-eda/out/declaration.json"
 
 [explainability]
 sample_size = 5000

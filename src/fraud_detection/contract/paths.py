@@ -14,7 +14,7 @@ from pathlib import Path
 
 from fraud_detection.config import get_orchestration_params
 
-__all__ = ["CONTRACT_FILE", "FRAGMENT_DIR"]
+__all__ = ["CONTRACT_FILE", "DECLARATION_FILE", "FRAGMENT_DIR"]
 
 _cfg = get_orchestration_params("feature_audit")
 
@@ -22,4 +22,11 @@ _cfg = get_orchestration_params("feature_audit")
 CONTRACT_FILE = Path(_cfg["contract_file"])
 
 #: Where the statistical audits leave their verdicts, for `stamp-contract` to merge.
-FRAGMENT_DIR = Path(_cfg.get("fragment_dir", "analysis/out/fragments"))
+#: They are written by a separate repository, so this points outside this one and is only
+#: read when somebody re-stamps by hand. See `audit_repo` in config/orchestration.toml.
+FRAGMENT_DIR = Path(_cfg.get("fragment_dir", "../ieee-cis-fraud-detection-eda/out/fragments"))
+
+#: The column list, sources and dtypes the same audit run declared, beside those fragments.
+DECLARATION_FILE = Path(
+    _cfg.get("declaration_file", "../ieee-cis-fraud-detection-eda/out/declaration.json")
+)
