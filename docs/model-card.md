@@ -111,8 +111,8 @@ ground truth, because the dataset contains none.
 
 **Uneven across products.** `ProductCD` splits the population into groups with different fraud
 rates and different model quality, worst on the segment holding most of the traffic. A pooled
-metric hides this, which is why the gate carries a per-segment check and the contract carries a
-per-segment audit.
+metric hides this, which is why the gate judges the model on its largest segment against that
+segment's own base rate, and why the contract records a per-segment verdict for every column.
 
 **Anonymised features cannot be explained.** `V*`, `C*`, `D*` and `M*` are anonymised by the
 provider and several of the strongest drivers are among them. An explanation built on them can

@@ -162,41 +162,12 @@ a floor of `0.0`, and the other read a metric key training never wrote, so
 `dict.get(key, 0.0)` turned the missing value into a pass. Both were rewritten; the table
 above is the gate as it runs now.
 
-## The feature contract
+## Does the contract select on signal? Measured 2026-08-16
 
-502 columns declared, 205 admitted, 297 rejected, no overrides. Four audits write fragments,
-each carrying its own reproducibility evidence:
-
-| Audit | Rejects | Reproducibility | Reading |
-| --- | ---: | --- | --- |
-> **These numbers are from the Python implementation, superseded on 2026-08-19.** The
-> audits are now statistics rather than models and live in [`analysis/`](../analysis/README.md);
-> the current figures are in `analysis/out/tables/` and in the rendered reports. The table
-> below is kept because the migration was validated against it — 96.0% verdict agreement,
-> median absolute AUC difference 0.0014 — and a measurement that was replaced is more
-> informative than one that was quietly overwritten. What changed, and what the new
-> statistics found that these could not, is in [DECISIONS.md](../DECISIONS.md).
-
-| distribution_shift | 46 | 1.00 at doubled bin count | strongest |
-| redundancy | 210 | 0.78 over 93 measurable groups | sound |
-| time_consistency | 134 | 0.32 at a 1.5× wider window | weakest, and it rejects the most |
-| segment_qualification | 0 (would reject 26) | report-only | see below |
-
-The rejection counts sum to more than 297 because a column can be rejected by more than one
-check.
-
-`time_consistency` being both the least reproducible and the most prolific is why its
-verdicts on nineteen uid aggregates were once readmitted by policy override. That override has
-since been retired, on the measurement below.
-
-`segment_qualification` reports rather than rejects: applying its verdicts cost 0.0325 PR-AUC
-and gained 0.0005 on the segment it was protecting. It still records that 262 of 502 columns
-are unmeasurable inside a segment holding 74% of rows, which is a real coverage finding.
-
-### Does the contract select on signal? Measured 2026-08-16
-
-Four column sets of the same size, so the comparison is about which columns rather than how
-many. Five seeds each; the resolution of a five-seed mean is ±0.0018 ROC-AUC.
+502 columns declared, 205 admitted. Whether that selection is worth anything is a question
+about *models*, so it is measured here rather than in the audit repository: four column sets
+of the same size, so the comparison is about which columns rather than how many. Five seeds
+each; the resolution of a five-seed mean is ±0.0018 ROC-AUC.
 
 | Column set | Columns | ROC-AUC | vs admitted | |
 | --- | ---: | ---: | ---: | --- |
@@ -205,17 +176,20 @@ many. Five seeds each; the resolution of a five-seed mean is ±0.0018 ROC-AUC.
 | random draw from everything | 224 | 0.8890 | −0.0063 | 3.5× |
 | draw from what the audits rejected | 224 | 0.8674 | −0.0280 | 15.6× |
 
-Admitted beats random and random beats rejected, which is the ordering expected if the checks
-work. The margin against the rejected set is the largest effect measured anywhere in this
-project.
+Admitted beats random and random beats rejected, which is the ordering expected if the
+checks work. The margin against the rejected set is the largest effect measured anywhere in
+this project.
 
 That is evidence the contract previously lacked. Until this run it had been defended on
-serving surface and monitoring surface only, because no measurement supported a quality claim.
+serving surface and monitoring surface only, because no measurement supported a quality
+claim.
 
-The override does not earn its place. Nineteen columns were readmitted on the argument that
-`time_consistency` measures an aggregate changing meaning rather than a signal inverting;
-the effect is −0.0002 ROC-AUC. The argument still looks correct, but it is not worth nineteen
-columns, and retiring it leaves a smaller contract that performs identically.
+The override does not earn its place. Nineteen columns had been readmitted by policy against
+one check's verdict; the effect of retiring that override is −0.0002 ROC-AUC. A smaller
+contract performs identically, so the override is gone.
+
+Which checks produced the verdicts, how reproducible each one is, and what the current
+per-column figures are: [`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda).
 
 ### Superseded
 
@@ -226,6 +200,6 @@ one of those differences sat inside the noise band. The table above replaces the
 
 | | |
 | --- | --- |
-| Embargo width | the measurement tracked population composition; needs the base-rate control from the EDA notebook on decay |
+| Embargo width | the measurement tracked population composition rather than elapsed time; a controlled re-measurement is still owed |
 | Why the model is weak on `ProductCD == "W"` | features, label or base rate, not separated |
 | ROC-AUC decay under a controlled population | not measured |

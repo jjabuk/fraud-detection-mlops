@@ -15,7 +15,7 @@ share no entity, and flag whether a scored row belongs to an entity training has
 already seen. Both are set operations on a column.
 
 Whether this is the *right* key is a question about the data, and it is answered in
-``analysis/`` -- where the candidates are compared against a permuted null and the
+the audit repository -- where the candidates are compared against a permuted null and the
 chosen one is checked against this column.
 """
 

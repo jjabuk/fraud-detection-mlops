@@ -44,20 +44,23 @@ retrieved-at-serving-time all read from.
 | `card_txn_amt_sum_24h` | Total amount on this card over the preceding 24h | `card1` | admitted |
 | `card_amt_deviation_24h` | `TransactionAmt` minus the 24h mean above | `card1` | admitted |
 | `seconds_since_prev_txn_card` | Gap to the card's previous transaction | `card1` | admitted |
-| `device_txn_count_24h` | Transactions on this device in the preceding 24h | `DeviceInfo` | rejected, PSI 0.890 |
-| `client_txn_count_prior` | Transactions by this client, ever, before this one | `client_uid` | rejected, PSI 0.539 |
+| `device_txn_count_24h` | Transactions on this device in the preceding 24h | `DeviceInfo` | rejected |
+| `client_txn_count_prior` | Transactions by this client, ever, before this one | `client_uid` | rejected |
 | `client_txn_count_24h` | Transactions by this client in the preceding 24h | `client_uid` | admitted |
 | `client_amt_avg_prior` | Mean amount over the client's prior transactions | `client_uid` | admitted |
-| `client_amt_deviation_prior` | `TransactionAmt` minus that mean | `client_uid` | rejected, time consistency −0.12 |
-| `seconds_since_prev_txn_client` | Gap to the client's previous transaction | `client_uid` | rejected, PSI 0.597 |
+| `client_amt_deviation_prior` | `TransactionAmt` minus that mean | `client_uid` | rejected |
+| `seconds_since_prev_txn_client` | Gap to the client's previous transaction | `client_uid` | rejected |
+
+Admitted or rejected is read off `references/feature-contract.json`. Which check rejected a
+column, and the number behind it, are recorded there too; the analysis that produced them is
+in [`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda).
 
 The uid block is declared in [`config/feature-admission.toml`](../config/feature-admission.toml)
 and generated into the same statement: the standard deviation of six derived `D` columns and
 the mean of fourteen `C` and eight `M` columns over the client's prior transactions, 28 columns
-at current settings. The contract judges them like anything else, and currently admits seven:
-`time_consistency` rejects nineteen and `distribution_shift` two. Those nineteen are the ones a
-policy override used to readmit, until the override was measured at −0.0002 ROC-AUC and
-retired ([MEASUREMENTS.md](MEASUREMENTS.md)).
+at current settings. The contract judges them like anything else and currently admits seven.
+Nineteen of the rejected ones were readmitted by a policy override until that override was
+measured at −0.0002 ROC-AUC and retired ([MEASUREMENTS.md](MEASUREMENTS.md)).
 
 Computed but rejected columns still cost a BigQuery statement and nothing else: they never
 reach the model, and the contract records why.
@@ -65,8 +68,10 @@ reach the model, and the contract records why.
 ### The client entity
 
 `client_uid` is `card1 + addr1 + (day − D1)`, where `D1` is days since the card began, so
-`day − D1` recovers the day it began and is constant across that client's history. It reaches
-98.5% label purity against 84.8% for `card1`. The reconstruction is measured by
+`day − D1` recovers the day it began and is constant across that client's history. Whether
+that reconstruction identifies a real customer is a question about the data, answered in
+[`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda); the contract carries the verdict as its
+`entity` block. The expression is built by
 [`features/features.py`](../src/fraud_detection/features/features.py) as `CLIENT_UID_EXPRESSION`, carried into `model_input` as a column, and pinned
 by a test. Every client aggregate is computed over this grouping rather than over `card1`.
 
@@ -108,9 +113,9 @@ sample undercounts them. Slice a contiguous period, or read the whole file.
 
 ## 5. Deliberately absent
 
-**Reduction of `V1–V339`.** The redundancy audit found 129 representatives out of 339, a 62%
-cut. The full block stays until the retraining cost of dropping it is measured. See
-[`analysis/README.md`](../analysis/README.md).
+**Reduction of `V1–V339`.** The audits identify a far smaller set of representatives that
+carries the block's information ([`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda)). The full block
+stays here until the retraining cost of dropping it is measured, which is this side's job.
 
 **Online-shaped features.** This table is keyed by `TransactionID`. Serving would need one row
 per entity holding current state, which is the lookup described in

@@ -10,15 +10,24 @@ anyway, because the decision they encode is one somebody should approve.
 
 | File | Kind | Written by | Read by |
 | --- | --- | --- | --- |
-| `column-groups-v.json` | cited | hand-transcribed from a published EDA notebook | the R audits: block-level rejection in `time_consistency`, and `audit_pinned_blocks`, which checks the borrowed partition against this data |
+| `column-groups-v.json` | cited | hand-transcribed from a published EDA notebook | the [audit repository](https://github.com/jjabuk/ieee-cis-fraud-detection-eda), which keeps its own copy: it describes the dataset rather than this warehouse, so both sides read one without either owning it |
 | `column-groups-id.json` | cited | same source | **nothing** |
-| `feature-contract.json` | produced | `uv run stamp-contract`, from the audit fragments | `lightgbm_model`, both contract asset checks, the scoring job's fingerprint check |
-| `frequency-maps.json` | produced | `uv run build-frequency-maps` | `features/derivations.py` |
+| `feature-contract.json` | produced | `uv run stamp-contract`, from fragments the [audit repository](https://github.com/jjabuk/ieee-cis-fraud-detection-eda) wrote | `lightgbm_model`, both contract asset checks, the scoring job's fingerprint check, and `features/derivations.py` for the fitted parameters |
+| `frequency-maps.json` | superseded | `uv run build-frequency-maps` | `features/derivations.py`, and only when the contract carries none |
+
+`frequency-maps.json` is where the fitted counts lived before the audits became their own
+repository. They are fitted there now, on its training split, and travel inside
+`feature-contract.json` under the same fingerprint as the verdicts — so a map that moves
+invalidates every model pinned to that contract instead of quietly changing what the model
+sees. This file is read only when the contract carries no `fitted_parameters`, which keeps
+a contract stamped under the previous scheme loadable. `uv run build-frequency-maps` still
+works and still needs the warehouse; the audit repository's
+`scripts/build-audit-frame.R` does the same fit from the CSVs and needs nothing.
 
 `column-groups-id.json` has no consumer and is kept only as provenance: it is the transcribed
 half of a cited source whose other half *is* used and audited. Two things make that weaker
 than it sounds, and both are stated here rather than discovered later. The citation that
-matters is the URL in [ATTRIBUTION.md](../ATTRIBUTION.md), not the transcription. And the
+matters is the URL in [ATTRIBUTION.md](https://github.com/jjabuk/ieee-cis-fraud-detection-eda/blob/main/ATTRIBUTION.md), not the transcription. And the
 fact it records — which `id_*` columns are labels rather than numbers — is independently
 implemented in [`training/data.py`](../src/fraud_detection/training/data.py) and
 [`config/feature-admission.toml`](../config/feature-admission.toml), so this is a second
@@ -37,31 +46,32 @@ three consumers that must not disagree:
   from the columns marked `source: request`,
 - `contract.monitored_columns()`, the set a drift monitor would iterate.
 
-It is stamped by [`contract/stamp.py`](../src/fraud_detection/contract/stamp.py) from the
-fragments the R audits write, and defined by
+It also carries `derivations` — how each derived column is computed — and
+`fitted_parameters`, what the fitted ones learned, both executed by
+[`features/derivations.py`](../src/fraud_detection/features/derivations.py).
+
+It is stamped by [`contract/stamp.py`](../src/fraud_detection/contract/stamp.py) from
+fragments produced in [`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda), and defined by
 [`contract/`](../src/fraud_detection/contract/). The `fingerprint` field hashes the admitted
-set and the policy, so a hand-edited file fails its integrity check and a model can be pinned
-to the exact contract it was trained against.
+set, the policy and the fitted parameters, so a hand-edited file fails its integrity check
+and a model can be pinned to the exact contract it was trained against.
 
 ### Regenerating it
 
 Do this when the data changes, or after editing
-[`config/feature-admission.toml`](../config/feature-admission.toml):
+[`config/feature-admission.toml`](../config/feature-admission.toml). The verdicts come from
+[`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda), cloned beside this repository; re-run the audits there
+per its README, then:
 
 ```bash
-uv run dagster asset materialize \
-  -m fraud_detection.orchestration.definitions.feature_platform \
-  --select "fraud_detection/model_input+"     # rebuild, then re-export the audit frame
-
-cd analysis && Rscript -e 'targets::tar_make()' && quarto render && cd ..
-uv run stamp-contract
+uv run stamp-contract    # reads ../ieee-cis-fraud-detection-eda/out/, writes this directory
 ```
 
-The first step needs GCP credentials and a populated `features.model_input`; the audits
-themselves need neither, only the exported parquet. Commit the result, since the diff is the
-decision.
+Commit the result, since the diff is the decision. After a policy edit that does not change
+how the verdicts were computed, `stamp-contract` reassembles from the existing fragments in
+seconds.
 
-After a policy edit that does not change how the audits were computed, `uv run stamp-contract`
-alone reassembles from the existing fragments in seconds. `uv run stamp-contract --check` is
-what CI runs: it stamps into memory and compares fingerprints, so a contract that was never
-re-stamped fails the build.
+`uv run stamp-contract --check` compares a fresh stamp against the committed file and is a
+local check: CI cannot run it, because the fragments are not in this repository. CI verifies
+instead that the committed contract's stored fingerprint still matches a hash of its own
+contents, which is the failure this side can have on its own.

@@ -83,7 +83,7 @@ def test_the_package_root_stays_empty():
 def test_pure_layer_covers_what_a_notebook_needs():
     """A guard against the layers being satisfied by being empty.
 
-    The list shrank when the audits moved to `analysis/`. What the rule protects is
+    The list shrank when the audits moved to their own repository. What the rule protects is
     unchanged and is now narrower and sharper: the entity key, the modelling recipe
     and the contract are the three things an analysis has to be able to call
     against the same implementation the pipeline runs.
