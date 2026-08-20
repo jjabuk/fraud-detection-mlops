@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 
 import pytest
@@ -161,7 +162,7 @@ def test_hand_editing_the_file_is_caught():
 
 # ---- fragments, as the audits write them ---------------------------------------
 
-# The audits live in analysis/ and are R. What crosses the boundary is a JSON
+# The audits live in their own repository and are R. What crosses the boundary is a JSON
 # fragment per check, so these are tests of a file format rather than of a
 # statistic -- the statistics have their own tests, in testthat, next to them.
 
@@ -363,3 +364,63 @@ def test_the_policy_section_moves_the_fingerprint():
 
     assert off.as_dict() != on.as_dict()
     assert on.segment_enabled and not off.segment_enabled
+
+
+# The two blocks the audit repository added when it took over fitting: how each derived
+# column is computed, and what the fitted ones learned. They matter here because this side
+# executes them, and because the fingerprint has to cover them -- a frequency map that can
+# move without invalidating the pin is the half of the specification nobody notices
+# changing.
+
+
+def _minimal_contract(**kwargs) -> FeatureContract:
+    return FeatureContract.build(
+        {"TransactionAmt": ("request", "float"), "addr1_freq": ("derived", "int")},
+        [],
+        admission_rules={"threshold": 0.25},
+        **kwargs,
+    )
+
+
+DERIVATION = {"name": "addr1_freq", "tool": "frequency_encode", "inputs": ["addr1"]}
+MAPS = {"frequency_maps": {"min_count": 2, "maps": {"addr1": {"315": 120, "204": 7}}}}
+
+
+def test_the_contract_carries_the_derivation_recipes_not_just_their_names():
+    contract = _minimal_contract(derivations=[DERIVATION])
+    assert contract.derivations == (DERIVATION,)
+    assert json.loads(contract.to_json())["derivations"] == [DERIVATION]
+
+
+def test_the_fingerprint_covers_a_fitted_parameter():
+    """Changing one count in one map has to invalidate every model pinned to the contract.
+
+    The counts decide what the model sees just as surely as the admitted set does, so a
+    contract that pinned the thresholds and left the fitted mapping loose would let a
+    retrain silently score against a different transform.
+    """
+    before = _minimal_contract(derivations=[DERIVATION], fitted_parameters=MAPS)
+    moved = copy.deepcopy(MAPS)
+    moved["frequency_maps"]["maps"]["addr1"]["315"] = 121
+    after = _minimal_contract(derivations=[DERIVATION], fitted_parameters=moved)
+    assert before.fingerprint() != after.fingerprint()
+
+
+def test_a_contract_without_the_blocks_hashes_as_it_did_before_they_existed():
+    """Backwards compatibility, on purpose and not by accident.
+
+    The blocks join the fingerprint payload only when present, so a contract stamped
+    before they existed still verifies against the value pinned on the models trained
+    against it. Adding them unconditionally would have invalidated every one of those.
+    """
+    assert _minimal_contract().fingerprint() == _minimal_contract(
+        derivations=(), fitted_parameters={}
+    ).fingerprint()
+
+
+def test_the_blocks_survive_a_round_trip_through_json():
+    contract = _minimal_contract(derivations=[DERIVATION], fitted_parameters=MAPS)
+    restored = FeatureContract.from_json(contract.to_json())
+    assert restored.derivations == (DERIVATION,)
+    assert restored.fitted_parameters == MAPS
+    assert restored.fingerprint() == contract.fingerprint()

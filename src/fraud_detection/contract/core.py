@@ -111,6 +111,15 @@ class FeatureContract:
     fragments: tuple[Fragment, ...] = ()
     entity: dict = field(default_factory=dict)
     admission_rules: dict = field(default_factory=dict)
+    #: How each derived column is computed: ``name``, ``tool``, ``inputs``, ``params``.
+    #: The audits decide what a column *is*; this side renders each entry into the SQL or
+    #: the dataframe operation that produces it. Neither infers the other's half.
+    derivations: tuple[dict, ...] = ()
+    #: Parameters of the fitted derivations — today the frequency-encoding count tables.
+    #: They live here rather than in a loose file because a fitted mapping is part of the
+    #: specification: a contract whose thresholds are pinned and whose fitted mappings are
+    #: not is pinning the easy half.
+    fitted_parameters: dict = field(default_factory=dict)
     created_at: str = ""
     version: str = "1"
 
@@ -125,6 +134,8 @@ class FeatureContract:
         data: dict | None = None,
         entity: dict | None = None,
         admission_rules: dict | None = None,
+        derivations: Iterable[dict] = (),
+        fitted_parameters: dict | None = None,
         overrides: Iterable = (),
         version: str = "1",
     ) -> FeatureContract:
@@ -187,6 +198,8 @@ class FeatureContract:
             fragments=fragments,
             entity=dict(entity or {}),
             admission_rules=dict(admission_rules or {}),
+            derivations=tuple(derivations),
+            fitted_parameters=dict(fitted_parameters or {}),
             created_at=datetime.now(UTC).isoformat(timespec="seconds"),
             version=version,
         )
@@ -252,6 +265,15 @@ class FeatureContract:
             "columns": [(c.name, c.source, c.dtype) for c in self.columns if c.admitted],
             "policy": self.admission_rules,
         }
+        # Added conditionally, so a contract stamped before these blocks existed still
+        # hashes to the value pinned on the models trained against it. A contract that
+        # *does* carry them covers them: changing a frequency map changes what the model
+        # sees just as surely as dropping a column does, and an unpinned fitted parameter
+        # is the half of the specification nobody notices moving.
+        if self.derivations:
+            payload["derivations"] = list(self.derivations)
+        if self.fitted_parameters:
+            payload["fitted_parameters"] = self.fitted_parameters
         return hashlib.sha256(
             json.dumps(payload, sort_keys=True, default=str).encode()
         ).hexdigest()[:16]
@@ -264,6 +286,8 @@ class FeatureContract:
             "data": self.data,
             "entity": self.entity,
             "policy": self.admission_rules,
+            "derivations": list(self.derivations),
+            "fitted_parameters": self.fitted_parameters,
             "summary": {
                 "declared": len(self.columns),
                 "admitted": len(self.training_features()),
@@ -295,6 +319,8 @@ class FeatureContract:
             data=d.get("data", {}),
             entity=d.get("entity", {}),
             admission_rules=d.get("policy", d.get("admission_rules", {})),
+            derivations=tuple(d.get("derivations", ())),
+            fitted_parameters=d.get("fitted_parameters", {}),
             created_at=d.get("created_at", ""),
             version=d.get("version", "1"),
         )
@@ -317,7 +343,7 @@ class FeatureContract:
 def fragment_from_dict(d: dict) -> Fragment:
     """Read one audit's fragment as the R package writes it.
 
-    The audits themselves live in ``analysis/`` and are stated as statistics rather
+    The audits themselves live in the ``ieee-cis-fraud-detection-eda`` repository and are stated as statistics rather
     than as models; what crosses into Python is their verdict plus the evidence
     behind it. This is the whole of that boundary.
 
@@ -391,7 +417,7 @@ def read_fragments(directory: Path, order: Sequence[str]) -> list[Fragment]:
     if missing:
         raise ContractError(
             f"no fragment for {', '.join(missing)} in {directory} — "
-            "run the audit notebooks or `tar_make()` in analysis/ first"
+            "run the audit notebooks or `tar_make()` in the audit repository first"
         )
     return [found[c] for c in order]
 

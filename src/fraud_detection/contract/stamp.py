@@ -102,6 +102,12 @@ def main(argv: list[str] | None = None) -> int:
         fragments,
         data=declaration.get("data", {}),
         entity={"columns": list(CLIENT_ENTITY_COMPONENTS), "anchor": CLIENT_ENTITY_ANCHOR},
+        # Both come from the audit repository, which owns them: it declares how each
+        # derived column is computed and it fits the parameters the fitted ones need.
+        # This side renders the declaration into SQL and applies the parameters; it does
+        # not decide either, which is what keeps the boundary pointing one way.
+        derivations=declaration.get("derivations", ()),
+        fitted_parameters=declaration.get("fitted_parameters", {}),
         admission_rules=rules.as_dict(),
         overrides=rules.overrides,
     )
