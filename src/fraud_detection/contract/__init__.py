@@ -17,10 +17,11 @@ from fraud_detection.contract.core import (
     from_admission_rules,
     read_fragments,
 )
-from fraud_detection.contract.paths import CONTRACT_FILE, FRAGMENT_DIR
+from fraud_detection.contract.paths import CONTRACT_FILE, DECLARATION_FILE, FRAGMENT_DIR
 
 __all__ = [
     "CONTRACT_FILE",
+    "DECLARATION_FILE",
     "FRAGMENT_DIR",
     "AdmissionError",
     "Blacklisted",

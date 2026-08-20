@@ -1,44 +1,42 @@
 # Code structure
 
 Three boundaries, and they are different questions with different answers: which
-*language* a piece of work is written in, which code a notebook may import, and which
-code may be deployed apart from what.
+*repository* a piece of work belongs to, which code a module may import, and which code
+may be deployed apart from what.
 
-## 1. The language seam
+## 1. The repository seam
 
 ```text
-analysis/            R      every audit, and the descriptive pass
-   ↓ fragments (JSON) + declaration
-src/fraud_detection/ Python  the model lifecycle
+ieee-cis-fraud-detection-eda   decides what is true of the data
+   ↓ one artefact: references/feature-contract.json
+src/fraud_detection/           decides what is done with a model
 ```
 
-The split is not by preference. Everything that decides **what is true of the data** is a
-statistical question and lives in R: rank statistics with confidence intervals,
-weight-of-evidence tables, permutation and two-sample tests, each with its own `testthat`
-suite and a `targets` graph. Everything that decides **what happens to a model** is
-Python: features in SQL, training, the promotion gate, serving.
+The split is not by preference, it is by mode of work. Deciding which columns a model may
+see is ad-hoc and a person drives it; training, gating and scoring repeat on every retrain
+and are automated. The contract is the specification the first signs and this side
+executes.
 
-Exactly one artefact crosses, in one direction. The audits write contract fragments;
-`uv run stamp-contract` merges them, applies the admission policy and stamps a
-fingerprint into `references/feature-contract.json`. Nothing in `analysis/` imports
-Python and nothing in `src/` imports R.
+What arrives in it, and what this side does with each part:
 
-| | `analysis/` (R) | `src/fraud_detection/` (Python) |
-| --- | --- | --- |
-| Answers | is this column trustworthy | what is done with the trustworthy ones |
-| Output | contract fragments, tables, Quarto reports | a trained, gated, promoted model |
-| Runs | on a parquet export, in minutes, no cloud | BigQuery, Dagster, Vertex, Cloud Run |
-| Tested by | `testthat` | `pytest` |
-| Depends on the other | no | only on the stamped JSON file |
+| In the contract | Read by |
+| --- | --- |
+| the admitted set, with the check and value behind every rejection | `lightgbm_model`, and both contract asset checks |
+| `derivations` — how each derived column is computed | [`features/derivations.py`](../src/fraud_detection/features/derivations.py), rendered into SQL or a dataframe operation |
+| `fitted_parameters` — what the fitted derivations learned | the same module, applied rather than refitted |
+| `entity` — the verdict on the reconstructed customer | [`features/entity.py`](../src/fraud_detection/features/entity.py) |
+| `policy` — the thresholds every verdict was produced under | nothing executes it; it is in the fingerprint so two models pinned to "the same" contract were judged by the same rules |
 
-Why the fingerprint is stamped on the Python side is in
+Nothing here recomputes a verdict, and nothing there imports this package.
+
+Why the fingerprint is stamped on this side is in
 [`contract/stamp.py`](../src/fraud_detection/contract/stamp.py): `FeatureContract.from_dict`
 refuses a file whose stored hash disagrees with its contents, and that detector must not
 depend on two JSON serialisers agreeing forever. One writer, one hash.
 
-What R needs from Python is the frame *as the model receives it* — the model input with
-the declared derivations already applied, which `uv run export-audit-frame` produces.
-Auditing the raw export instead would leave the thirty derived columns unexamined.
+`uv run export-audit-frame` writes the model input with the declared derivations applied,
+for the rarer case where the audits need to see the entity aggregates this side computes.
+The audit repository builds its own frame from the raw CSVs otherwise.
 
 ## 2. The import rule
 
@@ -95,7 +93,7 @@ and builds nothing either of them needs.
 flowchart TD
     subgraph platform [Feature Platform]
         R[raw CSVs] --> M[features.model_input]
-        A[audits] --> F[feature-contract.json]
+        A[contract, from the audit repository] --> F[feature-contract.json]
     end
 
     subgraph factory [Model Factory]
@@ -132,7 +130,7 @@ The import graph says nothing about where work happens.
 | Stage | Runs |
 | --- | --- |
 | Ingestion, join, feature engineering, model input, splits | BigQuery, one statement each; the result never leaves the warehouse |
-| Feature audits (`analysis/`) | Locally, in R, on a parquet export. Not a Dagster stage at all: `orchestration/assets/feature_audit.py` only reads the stamped contract and refuses a stale one. |
+| Feature audits | Not here at all, and not a Dagster stage: a separate repository, run by hand. `orchestration/assets/feature_audit.py` only reads the stamped contract and refuses a stale one. |
 | Training (`orchestration/assets/training.py`) | Locally, in the Dagster process |
 | Scoring windows and test model input | BigQuery, over `raw.scoring_history` (train ∪ test) |
 | Batch scoring (`orchestration/assets/inference.py`) | Cloud Run Job, from the image this repository builds |
@@ -140,7 +138,7 @@ The import graph says nothing about where work happens.
 Training is local because LightGBM cannot be expressed in SQL, and it pulls a few hundred
 MB into the process. That is the reason "where does Dagster run" is still an open question
 rather than a settled one — and it is now the *only* such stage, because the audits left
-the orchestrator with the data they used to load.
+the orchestrator entirely.
 
 ## 5. What each directory is, in the usual vocabulary
 
@@ -153,14 +151,14 @@ called `core/` from accumulating whatever had no obvious home.
 | --- | --- |
 | Configuration | [`config.py`](../src/fraud_detection/config.py), `config/*.toml` |
 | Data collection | [`orchestration/raw_load.py`](../src/fraud_detection/orchestration/raw_load.py), `kaggle/`, `schemas/` |
-| Data verification | [`analysis/`](../analysis/README.md) — every audit, in R — and [`contract/`](../src/fraud_detection/contract/), which turns its verdicts into one admitted list |
+| Data verification | Not in this repository: [`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda) produces the verdicts. [`contract/`](../src/fraud_detection/contract/) is what enforces them here. |
 | Feature extraction | [`features/`](../src/fraud_detection/features/) |
 | ML code | [`training/`](../src/fraud_detection/training/) |
-| Analysis tools | [`analysis/notebooks/`](../analysis/README.md), [`tools/noise_band.py`](../src/fraud_detection/tools/noise_band.py), `training/plots.py` |
+| Analysis tools | [`tools/noise_band.py`](../src/fraud_detection/tools/noise_band.py) and `training/plots.py` — both about a *model*. Anything about the data is the other repository. |
 | Process management | [`orchestration/`](../src/fraud_detection/orchestration/) (Dagster), [`registry/`](../src/fraud_detection/registry/) |
 | Serving infrastructure | [`serving/`](../src/fraud_detection/serving/) |
 | Machine resource management | [`iaac/`](../iaac/README.md), `Dockerfile` |
-| Monitoring | **absent.** `inference.prediction_logs` records what a monitor would read and nothing reads it on a schedule. The statistics a drift monitor needs already exist in [`analysis/R/distribution_shift.R`](../analysis/R/distribution_shift.R) — the same PSI against the same measured null — so what is missing is a cadence and somebody to alert, not a method. See [architecture.md](architecture.md). |
+| Monitoring | **absent.** `inference.prediction_logs` records what a monitor would read and nothing reads it on a schedule. The measurements a drift monitor needs already exist as audits in the other repository, so what is missing here is a cadence and somebody to alert, not a method. See [architecture.md](architecture.md). |
 
 The mapping is one-to-one on purpose. A directory that answers to two boxes is a directory
 whose name cannot tell you what belongs in it, which is how the previous `core/` came to

@@ -1,6 +1,6 @@
 """Write the frame the audits are supposed to see.
 
-The audits live in ``analysis/`` and are R. What they must audit is not the table as
+The audits live in the ``ieee-cis-fraud-detection-eda`` repository and are R. What they must audit is not the table as
 BigQuery stores it but the table *as the model receives it* — which means with the
 declared derivations applied. Eight of the thirty derived columns were rejected by an
 audit the last time the whole set was measured, so handing R the raw export would

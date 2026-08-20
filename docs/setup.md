@@ -6,56 +6,32 @@ and why it looks this way: [architecture.md](architecture.md).
 `<your-project-id>` means your GCP project ID throughout.
 
 
-## The audits (R)
+## The feature contract
 
-The analysis that produces the feature contract is an R package in `analysis/`. It is a
-separate toolchain on purpose: it depends on none of the Python environment, and the
-Python side depends on none of it beyond one JSON file.
+The contract is produced by a separate repository,
+[`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda). Most work here needs nothing from it:
+`references/feature-contract.json` is committed, so the pipeline, the tests and CI all run
+against the file as it stands.
 
-```bash
-brew install r quarto
-cd analysis && Rscript -e 'renv::restore()'
-```
-
-`renv::restore()` reads `analysis/renv.lock` — 117 packages pinned to the versions the
-audits were last run against, resolved under R 4.5.1. It installs into a project library,
-not your system one, so this cannot disturb another project and another project cannot
-disturb this one. `analysis/.Rprofile` activates that library for every R session started
-in the directory, which is why the commands below need no further setup.
-
-The lockfile is the R half's answer to `uv.lock`. It exists for the same reason: an audit
-that produces a different verdict because a package moved underneath it is an audit whose
-output means nothing, and four separate reproducibility bugs in this repository were
-already of exactly that shape.
-
-The frame the audits read is produced by the `audit_frame` asset, so the usual way to
-refresh it is a Dagster materialisation rather than a command:
+What follows is only for re-stamping it after a fresh audit run. Clone that repository
+beside this one, which is where `stamp-contract` looks by default, and follow its README to
+produce the fragments:
 
 ```bash
-uv run dagster asset materialize \
-  -m fraud_detection.orchestration.definitions.feature_platform \
-  --select fraud_detection/audit_frame
+git clone https://github.com/jjabuk/ieee-cis-fraud-detection-eda.git ../ieee-cis-fraud-detection-eda
 ```
 
-`uv run export-audit-frame` does the same thing from a local parquet, for when the
-warehouse is not reachable. Point `FRAUDAUDIT_PARQUET` elsewhere if the file is not at
-the default path under `data/local/cache/`:
+Then come back and merge them into the contract:
 
 ```bash
-cd analysis
-Rscript -e 'targets::tar_make()'    # the audit graph
-Rscript tests/run.R                 # the suite CI runs: synthetic, no data, no credentials
-quarto render                       # the readable reports
+uv run stamp-contract    # reads ../ieee-cis-fraud-detection-eda/out/, writes references/
 ```
 
-Then stamp the contract, which is the only thing that crosses back into Python:
+Pass `--declaration` and `--fragments` if the clone is somewhere else. CI does not re-stamp
+— the fragments live in the other repository — it verifies instead that the committed
+contract's stored fingerprint still matches a hash of its own contents, which is the
+failure this side can actually have.
 
-```bash
-uv run stamp-contract
-```
-
-`uv run stamp-contract --check` compares the fragments against the committed contract and
-exits non-zero when they disagree, which is the form CI runs.
 
 
 ## Prerequisites
@@ -191,7 +167,7 @@ For a one-off run against a different file, override `uri` via run config.
 ## 6. Running the pipeline
 
 ```bash
-# feature platform: ingestion, join, features, model input, audits, contract
+# feature platform: ingestion, join, features, model input, contract check
 uv run dagster asset materialize \
   -m fraud_detection.orchestration.definitions.feature_platform --select <asset>
 
@@ -243,8 +219,8 @@ graph TD
 | `joined_transactions_identity` | Left join plus `null_count_V_block`, one `CREATE OR REPLACE TABLE … AS SELECT` |
 | `transaction_features` | The point-in-time velocity features, one statement over the joined table |
 | `model_input` | Raw columns plus the engineered ones, joined on `TransactionID` |
-| `time_consistency_report`, `distribution_shift_report`, `redundancy_report` | The audits, into BigQuery tables |
-| `feature_contract` | Merges the fragments and writes `references/feature-contract.json`. Commit the result. |
+| `audit_frame` | Exports the model input as a parquet, for the rarer case where the audits need the entity aggregates this side computes |
+| `feature_contract` | Reads the stamped contract and refuses a stale one. Two asset checks: freshness and fingerprint integrity. |
 
 From a cold start: stage both files to GCS, then materialize `model_input` and let the chain
 pull everything else.
@@ -287,8 +263,8 @@ uv run dagster asset materialize \
   -m fraud_detection.orchestration.definitions.feature_platform \
   --select "fraud_detection/model_input+"
 
-cd analysis && Rscript -e 'targets::tar_make()' && quarto render
-cd .. && uv run stamp-contract
+# re-run the audits in the clone, per its README, then:
+uv run stamp-contract
 
 # now the contract exists and can be checked
 uv run dagster asset materialize \
@@ -309,13 +285,14 @@ it is a check, and a check belongs after the thing it checks.
 Then check the seam held:
 
 ```bash
-uv run stamp-contract --check              # non-zero when the contract is out of date
-uv run pytest && cd analysis && Rscript -e 'testthat::test_dir("tests/testthat")'
+uv run stamp-contract --check    # non-zero when the contract is out of date
+uv run pytest
 ```
 
-`--check` is what CI runs. It stamps into memory from the fragments on disk and compares
-the fingerprint with the committed file, so a contract that was never re-stamped after an
-audit fails the build instead of quietly describing an older table. The
+`--check` stamps into memory from the fragments in the audit clone and compares the
+fingerprint with the committed file, so a contract that was never re-stamped after an audit
+is caught here. CI cannot run it — the fragments are not in this repository — so this is a
+local check, and CI verifies the committed contract's internal fingerprint instead. The
 `feature_contract` asset is the same guarantee inside the graph: it reads the committed
 file, recomputes its fingerprint, and fails the run on a mismatch, a stale timestamp or an
 admitted set below the policy floor.

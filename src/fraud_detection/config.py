@@ -16,7 +16,7 @@ def resolve_repo_path(relative: str | Path) -> Path:
       copied in beside the package, so a plain relative path resolves — the Dockerfile
       says so explicitly and that behaviour has to keep working;
     * the **pipeline and tests** run from the repository root, where it also resolves;
-    * an **analysis** runs from `analysis/` or `analysis/notebooks/`, where it does not:
+    * an **analysis** runs from a notebook or a checkout of the audit repository, where it does not:
       `load_admission_rules()` raises "no admission file at config/feature-admission.toml"
       with the file sitting one or two directories up.
 

@@ -3,7 +3,7 @@
 What used to be here — that pasting card, address and an anchor together recovers a
 customer — is not a Python question any more. The identifier is built once by the
 feature-engineering statement and carried into `model_input`; whether it is the *right*
-identifier is measured in `analysis/`, against a permuted null.
+identifier is measured in the audit repository, against a permuted null.
 """
 
 from __future__ import annotations

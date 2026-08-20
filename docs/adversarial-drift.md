@@ -26,8 +26,8 @@ score is lower. The distribution of the features they control changes because of
 rule, and retraining on the result teaches the model that the new behaviour is normal, which
 is the adaptation the attacker was paying for.
 
-The measurement is identical in both cases. PSI on `TransactionAmt` rises to 0.31, the audit
-rejects the column, the pipeline proceeds. This system assumes the exogenous reading in every
+The measurement is identical in both cases. A drift index on `TransactionAmt` crosses its
+threshold, the contract rejects the column, the pipeline proceeds. This system assumes the exogenous reading in every
 case, and it assumes it silently, because the other reading was never represented in the
 design.
 
@@ -96,14 +96,14 @@ its coefficient, only to keep the count small, and keeping it small means waitin
 velocity feature here has an evasion whose cost to the attacker is patience and whose cost to
 the defender is that the feature stops separating.
 
-Four of the twelve are already rejected by the audits for drift: `device_txn_count_24h` at PSI
-0.890, `seconds_since_prev_txn_client` at 0.597, `client_txn_count_prior` at 0.539, and
-`client_amt_deviation_prior` on time consistency. [MEASUREMENTS.md](MEASUREMENTS.md) argues,
-correctly for a static dataset, that a lifetime counter must distribute differently in a late
-window than an early one. Under an adversary the same numbers admit a third reading that the
-static argument cannot rule out, because a counter's distribution shifting is what deliberate
-tempo reduction looks like. On this dataset the first reading is right; in production the two
-readings produce the same PSI and require opposite responses.
+Four of the twelve are already rejected by the contract for drift — `device_txn_count_24h`,
+`seconds_since_prev_txn_client`, `client_txn_count_prior` and `client_amt_deviation_prior`.
+The reason recorded against them is the one that holds for a static dataset: a lifetime
+counter must distribute differently in a late window than an early one. Under an adversary
+the same movement admits a second reading the static argument cannot rule out, because a
+counter's distribution shifting is also what deliberate tempo reduction looks like. On this
+dataset the first reading is right; in production the two produce the same measurement and
+require opposite responses.
 
 ## 4. The clock
 

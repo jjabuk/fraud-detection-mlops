@@ -122,10 +122,32 @@ FREQUENCY_MAP_FILE = "references/frequency-maps.json"
 
 
 def load_frequency_maps(path: str | None = None) -> dict[str, dict[str, int]]:
-    """Reads the pinned count table. Cached by the caller if it matters."""
+    """Reads the fitted count tables. Cached by the caller if it matters.
+
+    **The contract is the source.** The maps are fitted by the audit repository, on its
+    training split, and travel inside `references/feature-contract.json` under the same
+    fingerprint as the verdicts — so a model pinned to a contract is pinned to the mapping
+    it was trained under, and a map that moves invalidates that pin instead of quietly
+    changing what the model sees.
+
+    `references/frequency-maps.json` is where they lived before the audits became their
+    own repository. It is still read when the contract carries none, which keeps a
+    contract stamped under the previous scheme loadable; an explicit ``path`` always wins,
+    because a caller naming a file means it.
+    """
     import json
 
     from fraud_detection.config import resolve_repo_path
+
+    if path is None:
+        from fraud_detection.contract import CONTRACT_FILE, FeatureContract
+
+        contract_path = resolve_repo_path(CONTRACT_FILE)
+        if contract_path.exists():
+            fitted = FeatureContract.from_json(contract_path.read_text()).fitted_parameters
+            maps = fitted.get("frequency_maps", {}).get("maps")
+            if maps:
+                return maps
 
     return json.loads(resolve_repo_path(path or FREQUENCY_MAP_FILE).read_text())["maps"]
 

@@ -10,13 +10,15 @@ platform-specific details are in [google-cloud.md](google-cloud.md). Numbers liv
 
 ## The two halves
 
-`analysis/` is R and decides what is true of the data. `src/fraud_detection/` is Python and
-decides what is done with a model. Exactly one artefact crosses, in one direction: the
-audits write contract fragments, `stamp-contract` merges them into
+[`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda) is R and decides what is true of the data. This
+repository is Python and decides what is done with a model. Exactly one artefact crosses,
+in one direction: the audits write contract fragments, `stamp-contract` merges them into
 `references/feature-contract.json`, and everything downstream reads only that file.
 
-Nothing in `analysis/` imports Python and nothing in `src/` imports R, which is what makes
-the split a boundary rather than a preference. The mechanics are in
+They are two repositories because they are two modes of work. Analysis is ad-hoc and a
+person drives it; modelling repeats on every retrain and is automated. The contract is the
+specification the first signs and the second executes — the same line that in practice runs
+between an analytics team and a platform team. The mechanics are in
 [code-structure.md](code-structure.md).
 
 ## 1. Scope
@@ -29,7 +31,7 @@ validation a correctness requirement rather than a preference.
 ```mermaid
 graph LR
     A[Raw CSV] --> B[Feature engineering in BigQuery]
-    B --> C[Feature audits and contract]
+    B --> C[Feature contract, from the audit repository]
     C --> D[Training and experiment tracking]
     D --> E[Promotion gate and registry]
     E --> F[Batch scoring job]
@@ -45,7 +47,7 @@ graph LR
 | Streaming ingestion | The dataset is a static file. Replaying a holdout gives the same monitoring signal without new infrastructure. |
 | Multi-region / HA | Serving is stateless and scales to zero. Regional deployment matches the failure model this system actually has. |
 | Online serving with feature retrieval | Scoring is batch (§4). The image does answer `/predict` and `/health`, but only to satisfy the registry's container contract. The unbuilt part is the point lookup against entity state, and that is the hard part. |
-| Scheduled drift monitoring | The statistics exist — PSI against a measured null, Anderson–Darling, the energy test — in [`analysis/R/distribution_shift.R`](../analysis/R/distribution_shift.R), and `inference.prediction_logs` records what a scheduled job would read. Nothing runs them on a schedule. The audit and the monitor are the same statistics at different cadences with different consequences: the audit blocks and is versioned, a monitor would alert and would not. What the gap costs once an adversary is assumed: [adversarial-drift.md](adversarial-drift.md). |
+| Scheduled drift monitoring | `inference.prediction_logs` records what a scheduled job would read, and nothing reads it on a schedule. The methods are not the missing part — they already exist as audits in [`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda), where they run ad-hoc and block a contract. A monitor is the same measurements at a different cadence with a different consequence: it would alert rather than block. What the gap costs once an adversary is assumed: [adversarial-drift.md](adversarial-drift.md). |
 | Automated deploy on promotion | The image build is real and runs on every pull request; pushing it is a dispatched workflow. Rolling the Cloud Run Job onto a new tag stays a `tofu apply` with the SHA, because automating the last hop for a single-operator project removes a decision without removing work. |
 | Hosted Dagster | Running it locally proves the orchestration logic; hosting it is a cloud bill. The consequence is stated in §6. |
 | A rules layer in front of the model | Every production fraud stack runs one, because rules react on the transaction clock rather than the label clock. This system has none, and [adversarial-drift.md](adversarial-drift.md) §4 explains why that is a domain gap rather than a stylistic one. |
@@ -89,29 +91,23 @@ infrastructure whose operational debt compounds quietly.
    partition, and an unguarded aggregate over a nullable entity is a global volume proxy
    wearing a feature's name. Every frame is `RANGE … 1 PRECEDING`; the guarantee and the leak
    that was found in it are in [point-in-time.md](point-in-time.md).
-4. **Audits and one contract.** The audits are statistics, not models, and they are an R
-   package in [`analysis/`](../analysis/README.md): rank statistics with DeLong intervals,
-   weight-of-evidence tables, permutation and two-sample tests. Four write fragments;
-   `uv run stamp-contract` merges them, applies the admission policy and stamps the
+4. **One contract, produced elsewhere.** Which columns may reach the model is decided in
+   [`ieee-cis-fraud-detection-eda`](https://github.com/jjabuk/ieee-cis-fraud-detection-eda) and arrives as a file. `uv run stamp-contract`
+   merges that repository's fragments, applies the admission policy and stamps the
    fingerprint into `references/feature-contract.json`, committed so a change to the
-   admitted set arrives as a diff. The audits run when the data changes, not on every
-   training run, because their answer is a property of the data.
+   admitted set arrives as a reviewable diff. It is re-stamped when the data changes, not
+   on every training run, because its answer is a property of the data rather than of a
+   run.
 
-   The entity key stays in Python, in
-   [`features/entity.py`](../src/fraud_detection/features/entity.py),
-   because it is a transformation the training job runs rather than a question about the
-   data. Whether the reconstruction is *correct* is a question about the data, and it is
-   answered on the R side like the others; its verdict arrives as the contract's `entity`
+   Besides the admitted set, the contract carries how each derived column is computed and
+   the parameters the fitted derivations need. This side renders those declarations into
+   SQL and applies the parameters; it does not decide either.
+
+   The entity key stays here, in
+   [`features/entity.py`](../src/fraud_detection/features/entity.py), because it is a
+   transformation the training job runs. Whether the reconstruction is *correct* is a
+   question about the data, so it is answered there and arrives as the contract's `entity`
    block.
-
-   **Why the split runs this way.** A single-feature gradient boosting fit answers "does
-   this column carry signal" and cannot say why it answered that. A ten-bin scorecard
-   answers the same question — the AUC of a weight-of-evidence-scored window is still the
-   Mann–Whitney statistic — and prints as eleven rows. For a decision that removes a
-   column from a model somebody has to sign off on, the second is worth more than the
-   first, and it costs nothing: the R implementation was validated against the Python one
-   it replaced before that one was deleted, at 96% verdict agreement with a median
-   absolute AUC difference of 0.0014.
 
 ## 4. Training and promotion
 

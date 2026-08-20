@@ -1,7 +1,8 @@
 """Turn the audit fragments into the contract the pipeline reads.
 
 This is the seam. Everything upstream of it is statistics and lives in
-``analysis/`` as R; everything downstream is the model lifecycle and lives here.
+a separate repository (jjabuk/ieee-cis-fraud-detection-eda) as R; everything
+downstream is the model lifecycle and lives here.
 The command itself decides nothing: it merges verdicts that were already reached,
 applies the admission policy, and stamps a fingerprint.
 
@@ -19,8 +20,8 @@ the same run, which is what ``--declaration`` and ``--fragments`` being siblings
 means.
 
     uv run stamp-contract \\
-        --declaration analysis/out/declaration.json \\
-        --fragments analysis/out/fragments \\
+        --declaration ../ieee-cis-fraud-detection-eda/out/declaration.json \\
+        --fragments ../ieee-cis-fraud-detection-eda/out/fragments \\
         --out references/feature-contract.json
 """
 
@@ -32,6 +33,8 @@ import sys
 from pathlib import Path
 
 from fraud_detection.contract import (
+    DECLARATION_FILE,
+    FRAGMENT_DIR,
     ContractError,
     FeatureContract,
     from_admission_rules,
@@ -72,9 +75,9 @@ def declared_from(document: dict) -> dict[str, tuple[str, str]]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
-        "--declaration", type=Path, default=Path("analysis/out/declaration.json")
+        "--declaration", type=Path, default=DECLARATION_FILE
     )
-    parser.add_argument("--fragments", type=Path, default=Path("analysis/out/fragments"))
+    parser.add_argument("--fragments", type=Path, default=FRAGMENT_DIR)
     parser.add_argument("--out", type=Path, default=Path("references/feature-contract.json"))
     parser.add_argument(
         "--check",
@@ -99,6 +102,12 @@ def main(argv: list[str] | None = None) -> int:
         fragments,
         data=declaration.get("data", {}),
         entity={"columns": list(CLIENT_ENTITY_COMPONENTS), "anchor": CLIENT_ENTITY_ANCHOR},
+        # Both come from the audit repository, which owns them: it declares how each
+        # derived column is computed and it fits the parameters the fitted ones need.
+        # This side renders the declaration into SQL and applies the parameters; it does
+        # not decide either, which is what keeps the boundary pointing one way.
+        derivations=declaration.get("derivations", ()),
+        fitted_parameters=declaration.get("fitted_parameters", {}),
         admission_rules=rules.as_dict(),
         overrides=rules.overrides,
     )
