@@ -65,10 +65,3 @@ addopts = "-q"
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
-
-# Notebooks are exploratory output, kept for the record rather than maintained as source.
-# Syntax, undefined names and unused imports still apply; the style rules below do not:
-# a bare `except Exception` around an optional plot, or a branch left in place to show
-# what was tried, is how an analysis reads and not a defect to fix.
-[tool.ruff.lint.per-file-ignores]
-"eda/notebooks/*.ipynb" = ["BLE001", "C408", "E402", "E722", "E741", "RUF034"]

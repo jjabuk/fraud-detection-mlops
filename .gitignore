@@ -45,15 +45,3 @@ data/local/
 # raw competition data — fetch with `uv run python kaggle/download.py`
 kaggle/input/
 kaggle/submissions/
-
-# generated reports — the notebook writes these to whatever it is run from
-notebooks/*.log
-notebooks/*.csv
-*_report.csv
-notebooks/reference.json
-# generated artefacts — the notebook writes these where it runs
-reference.json
-psi.csv
-adversarial.csv
-time_consistency_report.csv.cache/
-.cache/
