@@ -88,7 +88,7 @@ jobs:
       # should fail here rather than at the next deploy. Built, not pushed: pushing from a
       # pull request would put unreviewed code in the registry the job pulls from.
       - name: Build the scoring image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
